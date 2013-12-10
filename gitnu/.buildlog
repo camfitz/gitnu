@@ -768,3 +768,33 @@ build.dart --machine --removed=app/lib/components/accordion.dart --removed=app/l
 
 build.dart finished [292 ms]
 
+---
+build.dart --machine --removed=app/test.html
+
+build.dart finished [37 ms]
+
+---
+build.dart --machine --removed=app/terminal.dart.js --removed=app/terminal.dart.js.deps --removed=app/terminal....
+
+build.dart finished [34 ms]
+
+---
+build.dart --machine --changed=pubspec.lock
+
+build.dart finished [34 ms]
+
+---
+build.dart --machine --changed=pubspec.lock
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --removed=grind --removed=grind.cmd
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=pubspec.yaml
+
+build.dart finished [40 ms]
+
