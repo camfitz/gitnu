@@ -1,0 +1,18 @@
+/* Styles for Gitnu */
+.content div {
+  font-family: 'Helvetica', arial;
+  font-size: 16px;
+}
+
+.modal div {
+  color: #333333;
+  font-family: 'Helvetica', arial;
+}
+
+#container {
+  padding-top: 50px;
+}
+
+#container div, input, output {
+  font-size: 14px;
+}

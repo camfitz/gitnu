@@ -1,0 +1,6 @@
+name: Gitnu
+description: A Chrome packaged application providing a terminal interface for Git. Git interactive terminal, not unix
+dependencies:
+  browser: any
+  grinder: any
+  intl: any
