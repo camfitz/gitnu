@@ -5,3 +5,7 @@ packages:
     description: browser
     source: hosted
     version: "0.9.0"
+  chrome_gen:
+    description: chrome_gen
+    source: hosted
+    version: "0.3.1"

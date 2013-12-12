@@ -798,3 +798,1298 @@ build.dart --machine --changed=pubspec.yaml
 
 build.dart finished [40 ms]
 
+---
+build.dart --machine --changed=app/manifest.json
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=app/gitnu.html
+
+build.dart finished [34 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [65 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [68 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [63 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [68 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [70 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [69 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [68 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [67 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [61 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [67 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [69 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [66 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [71 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [68 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [67 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [66 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [65 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [65 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [69 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [70 ms]
+
+---
+build.dart --machine --changed=app/gitnu.html
+
+build.dart finished [36 ms]
+
+---
+build.dart --machine --changed=app/gitnu.html
+
+build.dart finished [36 ms]
+
+---
+build.dart --machine --changed=app/gitnu.html
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=app/gitnu.html
+
+build.dart finished [33 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [64 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [66 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [73 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [68 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [75 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [65 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [66 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [71 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [70 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [72 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [68 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [72 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [65 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [66 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [64 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [67 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [70 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [64 ms]
+
+---
+build.dart --machine --changed=pubspec.yaml
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=pubspec.lock
+
+build.dart finished [37 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [111 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [123 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [123 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [105 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [109 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [110 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [123 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [122 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [129 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [122 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [123 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [102 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [124 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [122 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [122 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [123 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [123 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [102 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [112 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [110 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [128 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [112 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [112 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/filehandlers.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [129 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [126 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [111 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [111 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [104 ms]
+
+---
+build.dart --machine --changed=app/gitnu.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [129 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [123 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [128 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [109 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [36 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [33 ms]
+
+---
+build.dart --machine --changed=app/gitnu.html
+
+build.dart finished [49 ms]
+
+---
+build.dart --machine --changed=app/gitnu.html
+
+build.dart finished [36 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [36 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [38 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [122 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal_filesystem.dart
+
+build.dart finished [122 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [37 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [37 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [39 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [38 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [30 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [127 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [110 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [104 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [112 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [118 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [116 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [115 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [125 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [124 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.css
+
+build.dart finished [33 ms]
+
+---
+build.dart --machine --changed=app/styles.css
+
+build.dart finished [36 ms]
+
+---
+build.dart --machine --changed=app/styles.css
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=app/styles.css
+
+build.dart finished [35 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [109 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [109 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [117 ms]
+
+---
+build.dart --machine --changed=app/styles.css
+
+build.dart finished [37 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [121 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [113 ms]
+
+---
+build.dart --machine --changed=app/styles.css
+
+build.dart finished [36 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [119 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [122 ms]
+
+---
+build.dart --machine --changed=app/lib/terminal-dart/terminal.dart
+
+build.dart finished [114 ms]
+
+---
+build.dart --machine --changed=app/gitnuterminal.dart
+
+build.dart finished [120 ms]
+
+---
+build.dart --machine --removed=app/filehandlers.dart
+
+build.dart finished [113 ms]
+

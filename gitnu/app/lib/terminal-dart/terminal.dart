@@ -13,20 +13,25 @@ class Terminal {
   String cmdLineContainer;
   String outputContainer;
   String cmdLineInput;
+  String container;
   OutputElement output;
   InputElement input;
   DivElement cmdLine;
+  DivElement containerDiv;
   String version = '0.0.1';
   List<String> themes = ['default', 'cream'];
   List<String> history = [];
   int historyPosition = 0;
+  int offset = 0;
+  String offsetBase = "top";
   Map<String, Function> cmds;
 
-  Terminal(this.cmdLineContainer, this.outputContainer, this.cmdLineInput) {
+  Terminal(this.cmdLineContainer, this.outputContainer, this.cmdLineInput, this.container) {
     cmdLine = document.querySelector(cmdLineContainer);
     output = document.querySelector(outputContainer);
     input = document.querySelector(cmdLineInput);
-
+    containerDiv = document.querySelector(container);
+    
     // Always force text cursor to end of input line.
     window.onClick.listen((event) => cmdLine.focus());
 
@@ -37,6 +42,8 @@ class Terminal {
     cmdLine.onKeyDown.listen(historyHandler);
     cmdLine.onKeyDown.listen(processNewCommand);
   }
+  
+  
 
   void historyHandler(KeyboardEvent event) {
     var histtemp = "";
@@ -316,6 +323,7 @@ class Terminal {
   }
 
   void cdCommand(String cmd, List<String> args) {
+    window.console.debug(cmd + ' ' + args.toString());
     var dest = args.join(' ').trim();
     if (dest.isEmpty) {
       dest = '/';
@@ -334,7 +342,7 @@ class Terminal {
     writeOutput(new DateTime.now().toLocal().toString());
   }
 
-  StringBuffer formatColumns(List<Entry> entries) {
+  static StringBuffer formatColumns(List<Entry> entries) {
     var maxName = entries[0].name;
     entries.forEach((entry) {
       if (entry.name.length > maxName.length) {
@@ -343,7 +351,9 @@ class Terminal {
     });
 
     // If we have 3 or less entires, shorten the output container's height.
-    var height = entries.length <= 3 ? 'height: ${entries.length}em;' : '${entries.length ~/ 3}em';
+    // Changed to ~/ 2 instead of ~/ 3
+    var height = entries.length <= 3 ? 'height: ${entries.length}em;' : '${entries.length ~/ 2}em';
+    //var height = 'height: ${entries.length ~/ 3}em;';
     var colWidth = "${maxName.length}em";
     StringBuffer sb = new StringBuffer();
     sb.write('<div class="ls-files" style="-webkit-column-width: $colWidth; height: $height">');
@@ -352,6 +362,7 @@ class Terminal {
 
 
   void lsCommand(String cmd, List<String> args) {
+    
     void displayFiles(List<Entry> entry) {
       if (entry.length != 0) {
 
@@ -610,7 +621,7 @@ class Terminal {
 
   void whoCommand(String cmd, List<String> args) {
     writeOutput('${htmlEscape(document.title)}'
-                ' - By:  Eric Bidelman <ericbidelman@chromium.org>,'
+                'By:  Eric Bidelman <ericbidelman@chromium.org>,'
                 ' Adam Singer <financeCoding@gmail.com>');
   }
 

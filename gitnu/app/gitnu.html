@@ -33,6 +33,8 @@
           <li class="active"><a href="#">Terminal</a></li>
           <li><a role="button" id="modalAboutButton">About</a></li><!-- TODO -->
           <li><a role="button" id="modalVisualButton">Visual Tool</a></li>
+          <li><a role="button" id="choose_dir">Choose Directory</a></li>
+          <li><a>Path: <input type="text" id="file_path" value="Directory choice required." readonly></a></li>
         </ul>
       </div><!--/.nav-collapse -->
     </div>
@@ -41,7 +43,7 @@
   <div id="container">
     <output id="output"></output>
     <div id="input-line" class="input-line">
-      <div class="prompt">$&gt;</div><div><input id="cmdline" class="cmdline" autofocus /></div>
+      <div class="prompt">$&gt;</div><div><input id="cmdline" class="cmdline" tabindex="1" autofocus /></div>
     </div>
   </div>
   
