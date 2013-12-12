@@ -37,13 +37,11 @@ class Terminal {
 
     // Trick: Always force text cursor to end of input line.
     cmdLine.onClick.listen((event) => input.value = input.value);
-
+    
     // Handle up/down key presses for shell history and enter for new command.
     cmdLine.onKeyDown.listen(historyHandler);
     cmdLine.onKeyDown.listen(processNewCommand);
   }
-  
-  
 
   void historyHandler(KeyboardEvent event) {
     var histtemp = "";
@@ -119,7 +117,7 @@ class Terminal {
       // Function look up
       if (cmds[cmd] is Function) {
         cmds[cmd](cmd, args);
-      } else {
+      } else  {
         writeOutput('${htmlEscape(cmd)}: command not found');
       }
 
@@ -190,7 +188,7 @@ class Terminal {
       }
     });
   }
-
+  
   /**
    * Inserted by @camfitz to remove dependency.
    */
@@ -342,7 +340,7 @@ class Terminal {
     writeOutput(new DateTime.now().toLocal().toString());
   }
 
-  static StringBuffer formatColumns(List<Entry> entries) {
+  StringBuffer formatColumns(List<Entry> entries) {
     var maxName = entries[0].name;
     entries.forEach((entry) {
       if (entry.name.length > maxName.length) {
@@ -350,10 +348,7 @@ class Terminal {
       }
     });
 
-    // If we have 3 or less entires, shorten the output container's height.
-    // Changed to ~/ 2 instead of ~/ 3
-    var height = entries.length <= 3 ? 'height: ${entries.length}em;' : '${entries.length ~/ 2}em';
-    //var height = 'height: ${entries.length ~/ 3}em;';
+    var height = entries.length <= 3 ? 'height: ${entries.length}em;' : '${entries.length ~/ 3}em';
     var colWidth = "${maxName.length}em";
     StringBuffer sb = new StringBuffer();
     sb.write('<div class="ls-files" style="-webkit-column-width: $colWidth; height: $height">');

@@ -7,6 +7,7 @@
 
 library terminal_filesystem;
 import 'dart:html';
+import 'dart:async';
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 part 'terminal.dart';
 part '../../gitnuterminal.dart';
