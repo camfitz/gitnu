@@ -22,3 +22,9 @@
 #container div, input, output {
   font-size: 14px;
 }
+
+.logo {
+  color: #FFFFFF; 
+  background: none; 
+  border: none;
+}

@@ -37,7 +37,7 @@ class Terminal {
 
     // Trick: Always force text cursor to end of input line.
     cmdLine.onClick.listen((event) => input.value = input.value);
-    
+
     // Handle up/down key presses for shell history and enter for new command.
     cmdLine.onKeyDown.listen(historyHandler);
     cmdLine.onKeyDown.listen(processNewCommand);
@@ -117,7 +117,7 @@ class Terminal {
       // Function look up
       if (cmds[cmd] is Function) {
         cmds[cmd](cmd, args);
-      } else  {
+      } else {
         writeOutput('${htmlEscape(cmd)}: command not found');
       }
 

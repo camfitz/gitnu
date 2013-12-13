@@ -169,6 +169,56 @@ class GitnuTerminal extends Terminal {
       'who': whoCommand
     };
 
+    // Somewhat importantly, print out a welcome header. 
+    // Headers are slightly mangled below due to escaped characters.
+    var rng = new Random();
+    int choice = rng.nextInt(3);
+    
+    if (choice == 0) {
+      writeOutput('<pre class="logo">'    
+        '           ######   #### ######## ##    ## ##     ## <br>'
+        '          ##    ##   ##     ##    ###   ## ##     ## <br>'
+        '          ##         ##     ##    ####  ## ##     ## <br>'
+        '          ##   ####  ##     ##    ## ## ## ##     ## <br>'
+        '          ##    ##   ##     ##    ##  #### ##     ## <br>'
+        '          ##    ##   ##     ##    ##   ### ##     ## <br>'
+        '           ######   ####    ##    ##    ##  #######  </pre>');
+    } else if (choice == 1) {
+      writeOutput('<pre class="logo">'
+      '      ___                           ___         ___      <br>'
+      '     /  /\\      ___         ___    /__/\\       /__/\\     <br>'
+      '    /  /:/_    /  /\\       /  /\\   \\  \\:\\      \\  \\:\\    <br>'
+      '   /  /:/ /\\  /  /:/      /  /:/    \\  \\:\\      \\  \\:\\   <br>'
+      '  /  /:/_/::\\/__/::\\     /  /:/ _____\\__\\:\\ ___  \\  \\:\\  <br>'
+      ' /__/:/__\\/\\:\\__\\/\\:\\__ /  /::\\/__/::::::::/__/\\  \\__\\:\\ <br>'
+      ' \\  \\:\\ /~~/:/  \\  \\:\\//__/:/\\:\\  \\:\\~~\\~~\\\\  \\:\\ /  /:/ <br>'
+      '  \\  \\:\\  /:/    \\__\\::\\__\\/  \\:\\  \\:\\  ~~~ \\  \\:\\  /:/  <br>'
+      '   \\  \\:\\/:/     /__/:/     \\  \\:\\  \\:\\      \\  \\:\\/:/   <br>'
+      '    \\  \\::/      \\__\\/       \\__\\/\\  \\:\\      \\  \\::/    <br>'
+      '     \\__\\/                         \\__\\/       \\__\\/     '    
+      '</pre>');
+    } else if (choice == 2) {
+      writeOutput('<pre class="logo">' 
+      '      .-_\'\'\'-.  .-./`) ,---------. ,---.   .--.  ___    _  <br>'
+      '     \'_( )_   \\ \\ .-.\')\\          \\|    \\  |  |.\'   |  | | <br>'
+      '    |(_ o _)|  \'/ `-\' \\ `--.  ,---\'|  ,  \\ |  ||   .\'  | | <br>'
+      '    . (_,_)/___| `-\'`"`    |   \\   |  |\\_ \\|  |.\'  \'_  | | <br>'
+      '    |  |  .-----..---.     :_ _:   |  _( )_\\  |\'   ( \.-.| <br>'
+      '    \'  \\  \'-   .\'|   |     (_I_)   | (_ o _)  |\' (`. _` /| <br>'
+      '     \\  `-\'`   | |   |    (_(=)_)  |  (_,_)\\  || (_ (_) _) <br>'
+      '      \\        / |   |     (_I_)   |  |    |  | \\ /  . \\ / <br>'
+      '       `\'-...-\'  \'---\'     \'---\'   \'--\'    \'--\'  ``-\'`-\'\'  '
+      '</pre>');
+    } else if (choice == 3) {
+      writeOutput('<pre class="logo">'
+      '         _/_/_/  _/    _/                        <br>'  
+      '      _/            _/_/_/_/  _/_/_/    _/    _/ <br>'  
+      '     _/  _/_/  _/    _/      _/    _/  _/    _/  <br>'  
+      '    _/    _/  _/    _/      _/    _/  _/    _/   <br>'  
+      '     _/_/_/  _/      _/_/  _/    _/    _/_/_/    '  
+      '</pre>');
+    }
+    
     writeOutput('<div>Welcome to ${htmlEscape(document.title)}! (v$version)</div>');
     writeOutput(new DateTime.now().toLocal().toString());
     writeOutput('<p>Documentation: type "help"</p>');
@@ -212,10 +262,8 @@ class GitnuTerminal extends Terminal {
    * Added sorting of entries.
    */
   void lsCommand(String cmd, List<String> args) {
-    
     void displayFiles(List<Entry> entry) {
       if (entry.length != 0) {
-
         StringBuffer html = formatColumns(entry);
         entry.forEach((file) {
           var fileType = file.isDirectory ? 'folder' : 'file';
@@ -230,7 +278,7 @@ class GitnuTerminal extends Terminal {
 
     // Read contents of current working directory. According to spec, need to
     // keep calling readEntries() until length of result array is 0. We're
-    // guarenteed the same entry won't be returned again.
+    // guaranteed the same entry won't be returned again.
     List<Entry> entries = [];
     DirectoryReader reader = cwd.createReader();
 
