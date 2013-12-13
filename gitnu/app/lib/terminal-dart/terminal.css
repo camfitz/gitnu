@@ -104,12 +104,8 @@ body {
 }
 
 .ls-files {
-  height: 45px;
-  /* Default, but changed by js depending on length of filename */
-  -webkit-column-width: 100px;
-  -moz-column-width: 100px;
-  -o-column-width: 100px;
-  column-width: 100px;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Themes */
