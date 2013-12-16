@@ -1,15 +1,15 @@
-library FileHandler;
+library GitnuFileSystem;
 
 import 'dart:html';
 import 'dart:async';
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 import 'statictoolkit.dart';
 
-class FileHandler {
+class GitnuFileSystem {
   DirectoryEntry root;
   DirectoryEntry cwd;
   
-  FileHandler(String displayFilePath) {
+  GitnuFileSystem(String displayFilePath) {
     // Check if we set a rootFolder in a previous use of the app.
     chrome.storage.local.get('rootFolder').then((items) {
       chrome.fileSystem.isRestorable(items["rootFolder"]).then((value) {
