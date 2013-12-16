@@ -28,3 +28,7 @@
   background: none; 
   border: none;
 }
+
+.ls-files {
+  -webkit-column-count: 3;
+}

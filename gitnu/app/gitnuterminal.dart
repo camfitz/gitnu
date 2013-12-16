@@ -1,35 +1,40 @@
-part of terminal_filesystem;
+library GitnuTerminal;
 
-class GitnuTerminal extends Terminal {
-  DirectoryEntry root;
+import 'dart:html';
+import 'dart:async';
+import 'dart:math';
+import 'statictoolkit.dart';
+
+class GitnuTerminal {
+  String cmdLineContainer;
+  String outputContainer;
+  String cmdLineInput;
+  String container;
+  OutputElement output;
+  InputElement input;
+  DivElement cmdLine;
+  DivElement containerDiv;
+  String version = '0.0.1';
+  List<String> history = [];
+  int historyPosition = 0;
+  Map<String, Function> cmds;
+  Map<String, Function> extCmds;
   
-  GitnuTerminal(String cmdLineContainer, String outputContainer, String cmdLineInput, String container) : 
-    super(cmdLineContainer, outputContainer, cmdLineInput, container) {
-    // Check if we set a rootFolder in a previous use of the app.
-    chrome.storage.local.get('rootFolder').then((items) {
-      chrome.fileSystem.isRestorable(items["rootFolder"]).then((value) {
-        if(value == true) {
-          window.console.debug("Restoring saved root folder."); 
-          
-          chrome.fileSystem.restoreEntry(items["rootFolder"]).then((theRoot) {
-            this.root = theRoot;
-            this.cwd = theRoot;
-            
-            // Display filePath 
-            InputElement filePath = querySelector("#file_path");
-            filePath.value = this.root.fullPath;   
-          });
-        } else {
-          window.console.debug("No root folder to restore."); 
-        }
-      });
-    });
+  GitnuTerminal(this.cmdLineContainer, this.outputContainer, this.cmdLineInput, this.container) {
+    cmdLine = document.querySelector(cmdLineContainer);
+    output = document.querySelector(outputContainer);
+    input = document.querySelector(cmdLineInput);
+    containerDiv = document.querySelector(container);
     
-    // Listen for button click to open directory
-    InputElement chooseDirButton = document.querySelector('#choose_dir');  
-    chooseDirButton.onClick.listen((_) { 
-      openHandler("rootFolder");
-    });
+    // Always force text cursor to end of input line.
+    window.onClick.listen((event) => cmdLine.focus());
+
+    // Trick: Always force text cursor to end of input line.
+    cmdLine.onClick.listen((event) => input.value = input.value);
+
+    // Handle up/down key presses for shell history and enter for new command.
+    cmdLine.onKeyDown.listen(historyHandler);
+    cmdLine.onKeyDown.listen(processNewCommand);
     
     // Handles pgUp, pgDown, end and home scrolling
     containerDiv.onKeyDown.listen(positionHandler);
@@ -54,7 +59,6 @@ class GitnuTerminal extends Terminal {
     if (event.keyCode == pgDownKey || event.keyCode == pgUpKey ||
         event.keyCode == endKey || event.keyCode == homeKey) {
       event.preventDefault();
-      
       switch(event.keyCode) {
         case pgUpKey:
           containerDiv.scrollByLines(-5);
@@ -72,34 +76,11 @@ class GitnuTerminal extends Terminal {
     }
   }
   
-  /*
-   * Opens a folder window allowing you to choose a folder.
-   * Handler is returned, and the entry is retained in chrome.storage -> input storage name.
+  /**
+   * Handles command input
+   * Dispatches a function call either to commandFromList(cmd, args)
+   * or commandFromExternalList(cmd, ouputWriter, args) where appropriate.
    */
-  void openHandler(String storageName) {
-    chrome.ChooseEntryOptions options = new chrome.ChooseEntryOptions(
-        type: chrome.ChooseEntryType.OPEN_DIRECTORY);
-    chrome.fileSystem.chooseEntry(options).then((chrome.ChooseEntryResult res) {
-      DirectoryEntry theEntry = res.entry;
-      
-      // use local storage to retain access to this file
-      chrome.storage.local.set({storageName: chrome.fileSystem.retainEntry(theEntry)}).then((storageArea) {
-        window.console.debug("Retained chosen folder- " + theEntry.fullPath + " as " + storageName);    
-      });
-      
-      if(storageName == "rootFolder") {
-        this.root = theEntry;
-        
-        // Change the current working directory as well.
-        this.cwd = theEntry;
-        
-        // Display filePath 
-        InputElement filePath = querySelector("#file_path");
-        filePath.value = this.root.fullPath;    
-      }
-    });
-  }
-  
   void processNewCommand(KeyboardEvent event) {
     int enterKey = 13;
     int tabKey = 9;
@@ -107,12 +88,11 @@ class GitnuTerminal extends Terminal {
     if (event.keyCode == tabKey) {
       event.preventDefault();
     } else if (event.keyCode == enterKey) {
-
       if (!input.value.isEmpty) {
         history.add(input.value);
         historyPosition = history.length;
       }
-
+      
       // Move the line to output and remove id's.
       DivElement line = input.parent.parent.clone(true);
       line.attributes.remove('id');
@@ -130,16 +110,19 @@ class GitnuTerminal extends Terminal {
       String cmd = "";
       if (!cmdline.isEmpty) {
         cmdline.trim();
-        args = htmlEscape(cmdline).split(' ');
+        args = StaticToolkit.htmlEscape(cmdline).split(' ');
         cmd = args[0];
         args.removeRange(0, 1);
       }
-
+      
       // Function look up
       if (cmds[cmd] is Function) {
         cmds[cmd](cmd, args);
-      } else  {
-        writeOutput('${htmlEscape(cmd)}: command not found');
+      } else if(extCmds[cmd] is Function) {
+        // Pass our output writing function to the parent function.
+        extCmds[cmd](cmd, this.writeOutput, args);
+      } else {
+        writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
       }
 
       window.scrollTo(0, window.innerHeight);
@@ -149,26 +132,62 @@ class GitnuTerminal extends Terminal {
     }
   }
   
-  void initializeFilesystem(bool persistent, int size) {
+  /**
+   * Handles commands entered previously and redisplaying them in the input field
+   * when the up and down arrows are used.
+   */
+  void historyHandler(KeyboardEvent event) {
+    var histtemp = "";
+    int upArrowKey = 38;
+    int downArrowKey = 40;
+
+    /* keyCode == up-arrow || keyCode == down-arrow */
+    if (event.keyCode == upArrowKey || event.keyCode == downArrowKey) {
+      event.preventDefault();
+
+      // Up or down
+      if (historyPosition < history.length) {
+        history[historyPosition] = input.value;
+      } else {
+        histtemp = input.value;
+      }
+    }
+
+    if (event.keyCode == upArrowKey) { // Up-arrow keyCode
+      historyPosition--;
+      if (historyPosition < 0) {
+        historyPosition = 0;
+      }
+    } else if (event.keyCode == downArrowKey) { // Down-arrow keyCode
+      historyPosition++;
+      if (historyPosition >= history.length) {
+        historyPosition = history.length - 1;
+      }
+    }
+
+    /* keyCode == up-arrow || keyCode == down-arrow */
+    if (event.keyCode == upArrowKey || event.keyCode == downArrowKey) {
+      // Up or down
+      input.value = history[historyPosition] != null ? history[historyPosition]  : histtemp;
+    }
+  }
+  
+  /**
+   * Establishes commands that can be called from the terminal and prints a welcome note.
+   * Accepts a map of user commands to be called.
+   */
+  void initialiseCommands(Map<String, Function> commandList) {    
     cmds = {
       'clear': clearCommand,
       'help': helpCommand,
       'version': versionCommand,
-      'cat': catCommand,
-      'cd': cdCommand,
       'date': dateCommand,
-      'ls': lsCommand,
-      'mkdir': mkdirCommand,
-      'mv': mvCommand,
-      'cp': cpCommand,
-      'open': openCommand,
-      'pwd': pwdCommand,
-      'rm': rmCommand,
-      'rmdir': rmdirCommand,
-      'theme': themeCommand,
       'who': whoCommand
     };
-
+    
+    // User added commands
+    extCmds = commandList;
+    
     // Somewhat importantly, print out a welcome header. 
     // Headers are slightly mangled below due to escaped characters.
     var rng = new Random();
@@ -203,7 +222,7 @@ class GitnuTerminal extends Terminal {
       '     \'_( )_   \\ \\ .-.\')\\          \\|    \\  |  |.\'   |  | | <br>'
       '    |(_ o _)|  \'/ `-\' \\ `--.  ,---\'|  ,  \\ |  ||   .\'  | | <br>'
       '    . (_,_)/___| `-\'`"`    |   \\   |  |\\_ \\|  |.\'  \'_  | | <br>'
-      '    |  |  .-----..---.     :_ _:   |  _( )_\\  |\'   ( \.-.| <br>'
+      '    |  |  .-----..---.     :_ _:   |  _( )_\\  |\'   ( \\.-.| <br>'
       '    \'  \\  \'-   .\'|   |     (_I_)   | (_ o _)  |\' (`. _` /| <br>'
       '     \\  `-\'`   | |   |    (_(=)_)  |  (_,_)\\  || (_ (_) _) <br>'
       '      \\        / |   |     (_I_)   |  |    |  | \\ /  . \\ / <br>'
@@ -219,99 +238,52 @@ class GitnuTerminal extends Terminal {
       '</pre>');
     }
     
-    writeOutput('<div>Welcome to ${htmlEscape(document.title)}! (v$version)</div>');
+    writeOutput('<div>Welcome to ${StaticToolkit.htmlEscape(document.title)}! (v$version)</div>');
     writeOutput(new DateTime.now().toLocal().toString());
     writeOutput('<p>Documentation: type "help"</p>');
     
     writeOutput('<p>Initialise a root directory to begin.</p>');
-    
-    // Not necessary as we now initalise the FileSystem access by having the user choose
-    // a directory and treat that as the "root".
-    //window.requestFileSystem(size, persistent: persistent)
-    //.then(filesystemCallback, onError: errorHandler);
   }
   
   /**
-   * Simplied to use columns and roughly calculate the number of columns possible
+   * Wraps around the StaticToolkit writer function as we have access to the output stream
+   * and cmdLine element here.
    */
-  StringBuffer formatColumns(List<Entry> entries) {
-    var maxName = entries[0].name;
-    entries.forEach((entry) {
-      if (entry.name.length > maxName.length) {
-        maxName = entry.name;
-      }
-    });
-
-    StringBuffer sb = new StringBuffer();
-
-    // Max column width required
-    var emWidth = maxName.length * 14;
-    
-    int colCount = 3;
-    if(emWidth > window.innerWidth ~/ 2) {
-      colCount = 1;
-    } else if(emWidth > window.innerWidth ~/ 3) {
-      colCount = 2;
-    }
-    
-    sb.write('<div class="ls-files" style="-webkit-column-count: $colCount;">');
-    return sb;
-  }
-  
-  /**
-   * Added sorting of entries.
-   */
-  void lsCommand(String cmd, List<String> args) {
-    void displayFiles(List<Entry> entry) {
-      if (entry.length != 0) {
-        StringBuffer html = formatColumns(entry);
-        entry.forEach((file) {
-          var fileType = file.isDirectory ? 'folder' : 'file';
-          var span = '<span class="$fileType">${htmlEscape(file.name)}</span><br>';
-          html.write(span);
-        });
-
-        html.write('</div>');
-        writeOutput(html.toString());
-      }
-    };
-
-    // Read contents of current working directory. According to spec, need to
-    // keep calling readEntries() until length of result array is 0. We're
-    // guaranteed the same entry won't be returned again.
-    List<Entry> entries = [];
-    DirectoryReader reader = cwd.createReader();
-
-    void readEntries() {
-      reader.readEntries()
-      .then((List<Entry> results) {
-        if (results.length == 0) {
-          entries.sort((a, b) => a.name.compareTo(b.name));
-          displayFiles(entries);
-        } else {
-          entries.addAll(results);
-          readEntries();
-        }
-      }, onError: errorHandler);
-    };
-
-    readEntries();
-  }
-  
-  /**
-   * Added my sign-off.
-   */
-  void whoCommand(String cmd, List<String> args) {
-    writeOutput('${htmlEscape(document.title)}<br>'
-                'Basic terminal implementation - By:  Eric Bidelman '
-                '${htmlEscape("<ericbidelman@chromium.org>")}, Adam Singer '
-                '${htmlEscape("<financeCoding@gmail.com>")}<br>Adapted by Cameron Fitzgerald '
-                '${htmlEscape("<camfitz@google.com|camandco@gmail.com>")} for Git / advanced features.');
-  }
-  
   void writeOutput(String h) {
-    output.insertAdjacentHtml('beforeEnd', h);  
-    // Scrolls screen to ensure input is in view.
-    cmdLine.scrollIntoView(ScrollAlignment.TOP);
+    StaticToolkit.writeOutput(h, output, cmdLine);
+  }
+  
+  /**
+   * Basic inbuilt commands.
+   * User function invariant (except help... builds off user functions).
+   */
+  void clearCommand(String cmd, List<String> args) {
+    output.innerHtml = '';
+  }
+  
+  void helpCommand(String cmd, List<String> args) {
+    StringBuffer sb = new StringBuffer();
+    sb.write('<div class="ls-files">');
+    cmds.keys.forEach((key) => sb.write('$key<br>'));
+    extCmds.keys.forEach((key) => sb.write('$key<br>'));
+    sb.write('</div>');
+    writeOutput(sb.toString());
+  }
+
+  void versionCommand(String cmd, List<String> args) {
+    writeOutput("$version");
+  }
+  
+  void dateCommand(String cmd, var args) {
+    writeOutput(new DateTime.now().toLocal().toString());
+  }
+  
+  void whoCommand(String cmd, List<String> args) {
+    writeOutput('${StaticToolkit.htmlEscape(document.title)}<br>'
+                'Basic terminal implementation - By:  Eric Bidelman '
+                '${StaticToolkit.htmlEscape("<ericbidelman@chromium.org>")}, Adam Singer '
+                '${StaticToolkit.htmlEscape("<financeCoding@gmail.com>")}<br>Adapted by Cameron Fitzgerald '
+                '${StaticToolkit.htmlEscape("<camfitz@google.com|camandco@gmail.com>")} for Git / advanced '
+                'features.');
   }
 }
