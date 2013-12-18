@@ -9,3 +9,27 @@ packages:
     description: chrome_gen
     source: hosted
     version: "0.3.1"
+  crc32:
+    description: crc32
+    source: hosted
+    version: "0.1.4"
+  crypto:
+    description: crypto
+    source: hosted
+    version: "0.9.0"
+  path:
+    description: path
+    source: hosted
+    version: "1.0.0"
+  stack_trace:
+    description: stack_trace
+    source: hosted
+    version: "0.9.1"
+  unittest:
+    description: unittest
+    source: hosted
+    version: "0.9.2"
+  utf:
+    description: utf
+    source: hosted
+    version: "0.9.0"

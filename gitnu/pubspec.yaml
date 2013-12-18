@@ -3,3 +3,6 @@ description: A Chrome packaged application providing a terminal interface for Gi
 dependencies:
   browser: any
   chrome_gen: any
+  crc32: any
+  crypto: any
+  utf: any

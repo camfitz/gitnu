@@ -1,3 +1,4 @@
 packages/**/*
 packages/
 gitnu/.buildlog
+gitnu/app/lib/spark/*
