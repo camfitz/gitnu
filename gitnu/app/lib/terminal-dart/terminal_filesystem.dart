@@ -11,16 +11,13 @@ import 'dart:async';
 import 'dart:math';
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 part 'terminal.dart';
-part '../../gitnuterminal.dart';
 
 class TerminalFilesystem {
   //@camfitz mod to hold GitnuTerminal class
   GitnuTerminal term;
 
   void run() {
-    //@camfitz mod to hold GitnuTerminal class
-    term = new GitnuTerminal('#input-line', '#output', '#cmdline', '#container');
-    term.initializeFilesystem(false, 1024 * 1024);
+    
 
     //@camfitz no need for a theme
     //if (!window.location.hash.isEmpty) {

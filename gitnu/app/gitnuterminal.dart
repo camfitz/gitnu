@@ -1,105 +1,87 @@
-part of terminal_filesystem;
+library GitnuTerminal;
 
-class GitnuTerminal extends Terminal {
-  DirectoryEntry root;
-  
-  GitnuTerminal(String cmdLineContainer, String outputContainer, String cmdLineInput, String container) : 
-    super(cmdLineContainer, outputContainer, cmdLineInput, container) {
-    // Check if we set a rootFolder in a previous use of the app.
-    chrome.storage.local.get('rootFolder').then((items) {
-      chrome.fileSystem.isRestorable(items["rootFolder"]).then((value) {
-        if(value == true) {
-          window.console.debug("Restoring saved root folder."); 
-          
-          chrome.fileSystem.restoreEntry(items["rootFolder"]).then((theRoot) {
-            this.root = theRoot;
-            this.cwd = theRoot;
-            
-            // Display filePath 
-            InputElement filePath = querySelector("#file_path");
-            filePath.value = this.root.fullPath;   
-          });
-        } else {
-          window.console.debug("No root folder to restore."); 
-        }
-      });
-    });
-    
-    // Listen for button click to open directory
-    InputElement chooseDirButton = document.querySelector('#choose_dir');  
-    chooseDirButton.onClick.listen((_) { 
-      openHandler("rootFolder");
-    });
-    
+import 'dart:html';
+import 'dart:async';
+import 'dart:math';
+import 'statictoolkit.dart';
+
+class GitnuTerminal {
+  String _cmdLineContainer;
+  String _outputContainer;
+  String _cmdLineInput;
+  String _container;
+  OutputElement _output;
+  InputElement _input;
+  DivElement _cmdLine;
+  DivElement _containerDiv;
+  String _version = '0.0.1';
+  List<String> _history = [];
+  int _historyPosition = 0;
+  Map<String, Function> _cmds;
+  Map<String, Function> _extCmds;
+
+  GitnuTerminal(this._cmdLineContainer, this._outputContainer,
+      this._cmdLineInput, this._container) {
+    _cmdLine = document.querySelector(_cmdLineContainer);
+    _output = document.querySelector(_outputContainer);
+    _input = document.querySelector(_cmdLineInput);
+    _containerDiv = document.querySelector(_container);
+
+    // Always force text cursor to end of input line.
+    window.onClick.listen((event) => _cmdLine.focus());
+
+    // Trick: Always force text cursor to end of input line.
+    _cmdLine.onClick.listen((event) => _input.value = _input.value);
+
+    // Handle up/down key presses for shell history and enter for new command.
+    _cmdLine.onKeyDown.listen(historyHandler);
+    _cmdLine.onKeyDown.listen(processNewCommand);
+
     // Handles pgUp, pgDown, end and home scrolling
-    containerDiv.onKeyDown.listen(positionHandler);
-    
+    _containerDiv.onKeyDown.listen(positionHandler);
+
     // Ensures the terminal covers the correct height
     int topMargin = 54;
-    int bodyHeight = window.innerHeight; 
-    containerDiv.style.maxHeight = "${bodyHeight - topMargin}px";
-    containerDiv.style.height = "${bodyHeight - topMargin}px";
-    
+    int bodyHeight = window.innerHeight;
+    _containerDiv.style.maxHeight = "${bodyHeight - topMargin}px";
+    _containerDiv.style.height = "${bodyHeight - topMargin}px";
+
   }
-  
+
   /**
    * Handles scrolling using pgUp, pgDown, end and home keys.
    */
-  void positionHandler(KeyboardEvent event) { 
+  void positionHandler(KeyboardEvent event) {
     const int pgDownKey = 34;
     const int pgUpKey = 33;
     const int endKey = 35;
-    const int homeKey = 36;  
-    
+    const int homeKey = 36;
+
     if (event.keyCode == pgDownKey || event.keyCode == pgUpKey ||
         event.keyCode == endKey || event.keyCode == homeKey) {
       event.preventDefault();
-      
       switch(event.keyCode) {
         case pgUpKey:
-          containerDiv.scrollByLines(-5);
+          _containerDiv.scrollByLines(-5);
           break;
         case pgDownKey:
-          containerDiv.scrollByLines(5);
+          _containerDiv.scrollByLines(5);
           break;
         case endKey:
-          cmdLine.scrollIntoView(ScrollAlignment.TOP);
+          _cmdLine.scrollIntoView(ScrollAlignment.TOP);
           break;
         case homeKey:
-          output.scrollIntoView(ScrollAlignment.TOP);
+          _output.scrollIntoView(ScrollAlignment.TOP);
           break;
       }
     }
   }
-  
-  /*
-   * Opens a folder window allowing you to choose a folder.
-   * Handler is returned, and the entry is retained in chrome.storage -> input storage name.
+
+  /**
+   * Handles command input
+   * Dispatches a function call either to commandFromList(cmd, args)
+   * or commandFromExternalList(cmd, ouputWriter, args) where appropriate.
    */
-  void openHandler(String storageName) {
-    chrome.ChooseEntryOptions options = new chrome.ChooseEntryOptions(
-        type: chrome.ChooseEntryType.OPEN_DIRECTORY);
-    chrome.fileSystem.chooseEntry(options).then((chrome.ChooseEntryResult res) {
-      DirectoryEntry theEntry = res.entry;
-      
-      // use local storage to retain access to this file
-      chrome.storage.local.set({storageName: chrome.fileSystem.retainEntry(theEntry)}).then((storageArea) {
-        window.console.debug("Retained chosen folder- " + theEntry.fullPath + " as " + storageName);    
-      });
-      
-      if(storageName == "rootFolder") {
-        this.root = theEntry;
-        
-        // Change the current working directory as well.
-        this.cwd = theEntry;
-        
-        // Display filePath 
-        InputElement filePath = querySelector("#file_path");
-        filePath.value = this.root.fullPath;    
-      }
-    });
-  }
-  
   void processNewCommand(KeyboardEvent event) {
     int enterKey = 13;
     int tabKey = 9;
@@ -107,75 +89,108 @@ class GitnuTerminal extends Terminal {
     if (event.keyCode == tabKey) {
       event.preventDefault();
     } else if (event.keyCode == enterKey) {
-
-      if (!input.value.isEmpty) {
-        history.add(input.value);
-        historyPosition = history.length;
+      if (!_input.value.isEmpty) {
+        _history.add(_input.value);
+        _historyPosition = _history.length;
       }
 
       // Move the line to output and remove id's.
-      DivElement line = input.parent.parent.clone(true);
+      DivElement line = _input.parent.parent.clone(true);
       line.attributes.remove('id');
       line.classes.add('line');
-      InputElement cmdInput = line.querySelector(cmdLineInput);
+      InputElement cmdInput = line.querySelector(_cmdLineInput);
       cmdInput.attributes.remove('id');
       cmdInput.autofocus = false;
       cmdInput.readOnly = true;
-      output.children.add(line);
-      String cmdline = input.value;
-      input.value = ""; // clear input
+      _output.children.add(line);
+      String cmdline = _input.value;
+      _input.value = ""; // clear input
 
       // Parse out command, args, and trim off whitespace.
       List<String> args;
       String cmd = "";
       if (!cmdline.isEmpty) {
         cmdline.trim();
-        args = htmlEscape(cmdline).split(' ');
+        args = cmdline.split(' ');
         cmd = args[0];
         args.removeRange(0, 1);
       }
 
       // Function look up
-      if (cmds[cmd] is Function) {
-        cmds[cmd](cmd, args);
-      } else  {
-        writeOutput('${htmlEscape(cmd)}: command not found');
+      if (_cmds[cmd] is Function) {
+        _cmds[cmd](cmd, args);
+      } else if (_extCmds[cmd] is Function) {
+        // Pass our output writing function to the parent function.
+        _extCmds[cmd](args);
+      } else {
+        writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
       }
 
       window.scrollTo(0, window.innerHeight);
-      
+
       // Ensures scrolls to prompt line even if no output recorded.
-      cmdLine.scrollIntoView(ScrollAlignment.TOP);
+      _cmdLine.scrollIntoView(ScrollAlignment.TOP);
     }
   }
-  
-  void initializeFilesystem(bool persistent, int size) {
-    cmds = {
+
+  /**
+   * Handles commands entered previously and redisplaying them in the input
+   * field when the up and down arrows are used.
+   */
+  void historyHandler(KeyboardEvent event) {
+    int upArrowKey = 38;
+    int downArrowKey = 40;
+
+    if (event.keyCode == upArrowKey || event.keyCode == downArrowKey) {
+      event.preventDefault();
+
+      if (_historyPosition < _history.length) {
+        _history[_historyPosition] = _input.value;
+      }
+    }
+
+    if (event.keyCode == upArrowKey) {
+      _historyPosition--;
+      if (_historyPosition < 0) {
+        _historyPosition = 0;
+      }
+    } else if (event.keyCode == downArrowKey) {
+      _historyPosition++;
+      if (_historyPosition >= _history.length) {
+        _historyPosition = max(0, _history.length - 1);
+      }
+    }
+
+    if (event.keyCode == upArrowKey || event.keyCode == downArrowKey) {
+      if (_history.length != 0 && _history[_historyPosition] != null) {
+        _input.value = _history[_historyPosition];
+      }
+    }
+  }
+
+  /**
+   * Establishes commands that can be called from the terminal and prints a
+   * welcome note. Accepts a map of user commands to be called.
+   */
+  void initialiseCommands(Map<String, Function> commandList) {
+    _cmds = {
       'clear': clearCommand,
       'help': helpCommand,
       'version': versionCommand,
-      'cat': catCommand,
-      'cd': cdCommand,
       'date': dateCommand,
-      'ls': lsCommand,
-      'mkdir': mkdirCommand,
-      'mv': mvCommand,
-      'cp': cpCommand,
-      'open': openCommand,
-      'pwd': pwdCommand,
-      'rm': rmCommand,
-      'rmdir': rmdirCommand,
-      'theme': themeCommand,
       'who': whoCommand
     };
 
-    // Somewhat importantly, print out a welcome header. 
+    // User added commands
+    _extCmds = commandList;
+
+    // Somewhat importantly, print out a welcome header.
     // Headers are slightly mangled below due to escaped characters.
     var rng = new Random();
     int choice = rng.nextInt(3);
-    
+
     if (choice == 0) {
-      writeOutput('<pre class="logo">'    
+      writeOutput('<pre class="logo">'
         '           ######   #### ######## ##    ## ##     ## <br>'
         '          ##    ##   ##     ##    ###   ## ##     ## <br>'
         '          ##         ##     ##    ####  ## ##     ## <br>'
@@ -191,19 +206,21 @@ class GitnuTerminal extends Terminal {
       '   /  /:/ /\\  /  /:/      /  /:/    \\  \\:\\      \\  \\:\\   <br>'
       '  /  /:/_/::\\/__/::\\     /  /:/ _____\\__\\:\\ ___  \\  \\:\\  <br>'
       ' /__/:/__\\/\\:\\__\\/\\:\\__ /  /::\\/__/::::::::/__/\\  \\__\\:\\ <br>'
-      ' \\  \\:\\ /~~/:/  \\  \\:\\//__/:/\\:\\  \\:\\~~\\~~\\\\  \\:\\ /  /:/ <br>'
-      '  \\  \\:\\  /:/    \\__\\::\\__\\/  \\:\\  \\:\\  ~~~ \\  \\:\\  /:/  <br>'
+      ' \\  \\:\\ /~~/:/  \\  \\:\\//__/:/\\:\\  \\:\\~~\\~~\\\\  \\:\\ /  /:/ '
+          '<br>'
+      '  \\  \\:\\  /:/    \\__\\::\\__\\/  \\:\\  \\:\\  ~~~ \\  \\:\\  /:/  '
+          '<br>'
       '   \\  \\:\\/:/     /__/:/     \\  \\:\\  \\:\\      \\  \\:\\/:/   <br>'
       '    \\  \\::/      \\__\\/       \\__\\/\\  \\:\\      \\  \\::/    <br>'
-      '     \\__\\/                         \\__\\/       \\__\\/     '    
+      '     \\__\\/                         \\__\\/       \\__\\/     '
       '</pre>');
     } else if (choice == 2) {
-      writeOutput('<pre class="logo">' 
+      writeOutput('<pre class="logo">'
       '      .-_\'\'\'-.  .-./`) ,---------. ,---.   .--.  ___    _  <br>'
       '     \'_( )_   \\ \\ .-.\')\\          \\|    \\  |  |.\'   |  | | <br>'
       '    |(_ o _)|  \'/ `-\' \\ `--.  ,---\'|  ,  \\ |  ||   .\'  | | <br>'
       '    . (_,_)/___| `-\'`"`    |   \\   |  |\\_ \\|  |.\'  \'_  | | <br>'
-      '    |  |  .-----..---.     :_ _:   |  _( )_\\  |\'   ( \.-.| <br>'
+      '    |  |  .-----..---.     :_ _:   |  _( )_\\  |\'   ( \\.-.| <br>'
       '    \'  \\  \'-   .\'|   |     (_I_)   | (_ o _)  |\' (`. _` /| <br>'
       '     \\  `-\'`   | |   |    (_(=)_)  |  (_,_)\\  || (_ (_) _) <br>'
       '      \\        / |   |     (_I_)   |  |    |  | \\ /  . \\ / <br>'
@@ -211,107 +228,60 @@ class GitnuTerminal extends Terminal {
       '</pre>');
     } else if (choice == 3) {
       writeOutput('<pre class="logo">'
-      '         _/_/_/  _/    _/                        <br>'  
-      '      _/            _/_/_/_/  _/_/_/    _/    _/ <br>'  
-      '     _/  _/_/  _/    _/      _/    _/  _/    _/  <br>'  
-      '    _/    _/  _/    _/      _/    _/  _/    _/   <br>'  
-      '     _/_/_/  _/      _/_/  _/    _/    _/_/_/    '  
+      '         _/_/_/  _/    _/                        <br>'
+      '      _/            _/_/_/_/  _/_/_/    _/    _/ <br>'
+      '     _/  _/_/  _/    _/      _/    _/  _/    _/  <br>'
+      '    _/    _/  _/    _/      _/    _/  _/    _/   <br>'
+      '     _/_/_/  _/      _/_/  _/    _/    _/_/_/    '
       '</pre>');
     }
-    
-    writeOutput('<div>Welcome to ${htmlEscape(document.title)}! (v$version)</div>');
+
+    writeOutput('<div>Welcome to Gitnu! (v$_version)</div>');
     writeOutput(new DateTime.now().toLocal().toString());
     writeOutput('<p>Documentation: type "help"</p>');
-    
+
     writeOutput('<p>Initialise a root directory to begin.</p>');
-    
-    // Not necessary as we now initalise the FileSystem access by having the user choose
-    // a directory and treat that as the "root".
-    //window.requestFileSystem(size, persistent: persistent)
-    //.then(filesystemCallback, onError: errorHandler);
   }
-  
+
   /**
-   * Simplied to use columns and roughly calculate the number of columns possible
+   * Wraps around the StaticToolkit writer function as we have access to the
+   * output stream and cmdLine element here.
    */
-  StringBuffer formatColumns(List<Entry> entries) {
-    var maxName = entries[0].name;
-    entries.forEach((entry) {
-      if (entry.name.length > maxName.length) {
-        maxName = entry.name;
-      }
-    });
-
-    StringBuffer sb = new StringBuffer();
-
-    // Max column width required
-    var emWidth = maxName.length * 14;
-    
-    int colCount = 3;
-    if(emWidth > window.innerWidth ~/ 2) {
-      colCount = 1;
-    } else if(emWidth > window.innerWidth ~/ 3) {
-      colCount = 2;
-    }
-    
-    sb.write('<div class="ls-files" style="-webkit-column-count: $colCount;">');
-    return sb;
-  }
-  
-  /**
-   * Added sorting of entries.
-   */
-  void lsCommand(String cmd, List<String> args) {
-    void displayFiles(List<Entry> entry) {
-      if (entry.length != 0) {
-        StringBuffer html = formatColumns(entry);
-        entry.forEach((file) {
-          var fileType = file.isDirectory ? 'folder' : 'file';
-          var span = '<span class="$fileType">${htmlEscape(file.name)}</span><br>';
-          html.write(span);
-        });
-
-        html.write('</div>');
-        writeOutput(html.toString());
-      }
-    };
-
-    // Read contents of current working directory. According to spec, need to
-    // keep calling readEntries() until length of result array is 0. We're
-    // guaranteed the same entry won't be returned again.
-    List<Entry> entries = [];
-    DirectoryReader reader = cwd.createReader();
-
-    void readEntries() {
-      reader.readEntries()
-      .then((List<Entry> results) {
-        if (results.length == 0) {
-          entries.sort((a, b) => a.name.compareTo(b.name));
-          displayFiles(entries);
-        } else {
-          entries.addAll(results);
-          readEntries();
-        }
-      }, onError: errorHandler);
-    };
-
-    readEntries();
-  }
-  
-  /**
-   * Added my sign-off.
-   */
-  void whoCommand(String cmd, List<String> args) {
-    writeOutput('${htmlEscape(document.title)}<br>'
-                'Basic terminal implementation - By:  Eric Bidelman '
-                '${htmlEscape("<ericbidelman@chromium.org>")}, Adam Singer '
-                '${htmlEscape("<financeCoding@gmail.com>")}<br>Adapted by Cameron Fitzgerald '
-                '${htmlEscape("<camfitz@google.com|camandco@gmail.com>")} for Git / advanced features.');
-  }
-  
   void writeOutput(String h) {
-    output.insertAdjacentHtml('beforeEnd', h);  
-    // Scrolls screen to ensure input is in view.
-    cmdLine.scrollIntoView(ScrollAlignment.TOP);
+    StaticToolkit.writeOutput(h, _output, _cmdLine);
+  }
+
+  /**
+   * Basic inbuilt commands.
+   * User function invariant (except help... builds off user functions).
+   */
+  void clearCommand(String cmd, List<String> args) {
+    _output.innerHtml = '';
+  }
+
+  void helpCommand(String cmd, List<String> args) {
+    StringBuffer sb = new StringBuffer();
+    sb.write('<div class="ls-files">');
+    _cmds.keys.forEach((key) => sb.write('$key<br>'));
+    _extCmds.keys.forEach((key) => sb.write('$key<br>'));
+    sb.write('</div>');
+    writeOutput(sb.toString());
+  }
+
+  void versionCommand(String cmd, List<String> args) {
+    writeOutput("$_version");
+  }
+
+  void dateCommand(String cmd, var args) {
+    writeOutput(new DateTime.now().toLocal().toString());
+  }
+
+  void whoCommand(String cmd, List<String> args) {
+    writeOutput('${StaticToolkit.htmlEscape(document.title)}<br>'
+        'Basic terminal implementation - By:  Eric Bidelman '
+        '&lt;ericbidelman@chromium.org&gt;, Adam Singer '
+        '&lt;financeCoding@gmail.com&gt;<br>Adapted by Cameron Fitzgerald '
+        '&lt;camfitz@google.com|camandco@gmail.com&gt; for Git / advanced '
+        'features.');
   }
 }

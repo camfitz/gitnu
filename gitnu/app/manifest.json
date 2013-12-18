@@ -5,7 +5,7 @@
   "manifest_version": 2,
   "permissions": [
     "storage",
-    {"fileSystem": ["write", "retainEntries", "directory"]} 
+    {"fileSystem": ["write", "retainEntries", "directory"]}
   ],
   "app": {
     "background": {
