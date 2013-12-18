@@ -2,6 +2,7 @@ import 'dart:html';
 import 'gitnufilesystem.dart';
 import 'gitnuoutput.dart';
 import 'gitnuterminal.dart';
+import 'gitwrapper.dart';
 
 void main() {
   new Gitnu().run();
@@ -11,6 +12,7 @@ class Gitnu {
   GitnuTerminal _term;
   GitnuFileSystem _fileSystem;
   GitnuOutput _gitnuOutput;
+  GitWrapper _gitWrapper;
 
   // Div ID- where to put the root file path.
   final String kFilePathDiv = "#file_path";
@@ -34,6 +36,8 @@ class Gitnu {
           _fileSystem.kRootFolder, setRoot);
     });
 
+    _gitWrapper = new GitWrapper(_gitnuOutput);
+
     Map<String, Function> commandList;
     /**
      * Spec for user added functions-
@@ -49,7 +53,8 @@ class Gitnu {
       'pwd': _fileSystem.printDirectory,
       'rm': _fileSystem.rmCommand,
       'rmdir': _fileSystem.rmdirCommand,
-      'cat': _fileSystem.catCommand
+      'cat': _fileSystem.catCommand,
+      'git': _gitWrapper.gitDispatcher
     };
 
     _term.initialiseCommands(commandList);
