@@ -36,7 +36,7 @@ class Gitnu {
           _fileSystem.kRootFolder, setRoot);
     });
 
-    _gitWrapper = new GitWrapper(_gitnuOutput);
+    _gitWrapper = new GitWrapper(_gitnuOutput, _fileSystem);
 
     Map<String, Function> commandList;
     /**
