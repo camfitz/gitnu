@@ -15,7 +15,7 @@ class GitnuFileSystem {
   DirectoryEntry _root;
 
   // Current working directory about which operations are based.
-  DirectoryEntry cwd;
+  DirectoryEntry _cwd;
 
   // Instance or implementation of GitnuOutput class, permitting print
   // operations
@@ -73,11 +73,11 @@ class GitnuFileSystem {
    */
   void setRoot(DirectoryEntry root) {
     _root = root;
-    cwd = root;
+    _cwd = root;
   }
 
   String getCurrentDirectoryString() {
-    return cwd.fullPath;
+    return _cwd.fullPath;
   }
 
   DirectoryEntry getRoot() {
@@ -85,7 +85,7 @@ class GitnuFileSystem {
   }
 
   DirectoryEntry getCurrentDirectory() {
-    return cwd;
+    return _cwd;
   }
 
   String getRootString() {
@@ -122,7 +122,7 @@ class GitnuFileSystem {
    * Passes read file to callback function.
    */
   void read(String cmd, String path, Function callback) {
-    cwd.getFile(path).then((FileEntry fileEntry) {
+    _cwd.getFile(path).then((FileEntry fileEntry) {
       fileEntry.file().then((file) {
         var reader = new FileReader();
         reader.onLoadEnd.listen((ProgressEvent event) =>
@@ -185,8 +185,8 @@ class GitnuFileSystem {
       dest = '/';
     }
 
-    cwd.getDirectory(dest).then((DirectoryEntry dirEntry) {
-        cwd = dirEntry;
+    _cwd.getDirectory(dest).then((DirectoryEntry dirEntry) {
+        _cwd = dirEntry;
         printDirectory();
       }, onError: (FileError error) {
         invalidOpForEntryType(error, "cd", dest);
@@ -199,7 +199,7 @@ class GitnuFileSystem {
    */
   void lsCommand(List<String> args) {
     List<Entry> entries = [];
-    DirectoryReader reader = cwd.createReader();
+    DirectoryReader reader = _cwd.createReader();
 
     void readEntries() {
       reader.readEntries().then((List<Entry> results) {
@@ -253,9 +253,9 @@ class GitnuFileSystem {
         if (folders[0] == '.' || folders[0] == '') {
           folders.removeAt(0);
         }
-        createDirectory(cwd, folders);
+        createDirectory(_cwd, folders);
       } else {
-        cwd.createDirectory(dirName, exclusive: true).then(
+        _cwd.createDirectory(dirName, exclusive: true).then(
             (_) {}, onError: (FileError error) {
             invalidOpForEntryType(error, "mkdir", dirName);
         });
@@ -283,7 +283,7 @@ class GitnuFileSystem {
   }
 
   void open(String cmd, String path, Function successCallback) {
-    cwd.getFile(path).then((FileEntry fileEntry) {
+    _cwd.getFile(path).then((FileEntry fileEntry) {
       successCallback(path, fileEntry.toUrl());
     }, onError: (error) {
           if (error.code == FileError.NOT_FOUND_ERR) {
@@ -302,12 +302,12 @@ class GitnuFileSystem {
     bool recursive = args.length != originalLength;
 
     args.forEach((fileName) {
-      cwd.getFile(fileName).then((fileEntry) {
+      _cwd.getFile(fileName).then((fileEntry) {
             fileEntry.remove().then((_) {}, onError: errorHandler);
           },
           onError: (error) {
             if (recursive && error.code == FileError.TYPE_MISMATCH_ERR) {
-              cwd.getDirectory(fileName)
+              _cwd.getDirectory(fileName)
               .then((DirectoryEntry dirEntry) =>
                   dirEntry.removeRecursively().then(
                     (_) {}, onError: errorHandler),
@@ -323,7 +323,7 @@ class GitnuFileSystem {
 
   void rmdirCommand(List<String> args) {
     args.forEach((dirName) {
-      cwd.getDirectory(dirName).then((dirEntry) {
+      _cwd.getDirectory(dirName).then((dirEntry) {
             dirEntry.remove().then((_) {}, onError: (error) {
               if (error.code == FileError.INVALID_MODIFICATION_ERR) {
                 doOutput().printLine('rmdir: ${dirName}: Directory not empty');
