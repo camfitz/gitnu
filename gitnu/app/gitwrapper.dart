@@ -9,6 +9,7 @@ import 'lib/spark/spark/ide/app/lib/git/objectstore.dart';
 
 import 'lib/spark/spark/ide/app/lib/git/commands/clone.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/commit.dart';
+import 'lib/spark/spark/ide/app/lib/git/commands/push.dart';
 
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 import 'gitnuoutput.dart';
@@ -85,39 +86,35 @@ class GitWrapper {
   Future<ObjectStore> getRepo() {
     var completer = new Completer.sync();
 
-    repoOp() {
+    repoOperation() {
       ObjectStore store = new ObjectStore(_fileSystem.getCurrentDirectory());
       _fileSystem.getCurrentDirectory().getDirectory(".git").then(
         (DirectoryEntry gitDir) {
-          window.console.debug("Git directory!");
           store.load().then((value) {
-            window.console.debug("Restored Git objectstore.");
+            // Restored Git ObjectStore.
             completer.complete(store);
           });
         }, onError: (e) {
-          window.console.debug("Not a Git directory.");
+          // Not a Git directory.
           completer.complete(null);
         });
     }
 
-    repoOp();
+    repoOperation();
     return completer.future;
   }
 
+  /**
+   * TODO(@camfitz): Finalise basic implementation of this method.
+   */
   GitOptions buildOptions() {
     GitOptions custom = new GitOptions();
 
-    // custom.root = _defaultOptions.root;
-    // custom.username = _defaultOptions.username;
-    // custom.password = _defaultOptions.password;
-    // custom.repoUrl = _defaultOptions.repoUrl;
-    // custom.branchName = _defaultOptions.branchName;
-    // custom.store = _defaultOptions.store;
     custom.email = _defaultOptions.email;
-    // custom.commitMessage = _defaultOptions.commitMessage;
     custom.name = _defaultOptions.name;
-    // custom.depth = _defaultOptions.depth;
     custom.progressCallback = _defaultOptions.progressCallback;
+
+    return custom;
   }
 
   /**
@@ -152,18 +149,20 @@ class GitWrapper {
     }
 
     if (args.length != 1) {
-      // Throw an error for incorrect command line options
       _gitnuOutput.printLine("Error: no repo url passed to git clone.");
       return;
     }
 
     options.progressCallback = progressCallback;
-
     options.root = _fileSystem.getCurrentDirectory();
     options.repoUrl = args[0];
     options.store = new ObjectStore(_fileSystem.getCurrentDirectory());
     Clone clone = new Clone(options);
     options.store.init().then((_) {
+      /**
+       * TODO(@camfitz): Replace console debug with progress callback on screen,
+       * awaiting callback implementation in Git library.
+       */
       window.console.debug("Cloning...");
       _gitnuOutput.printLine("Cloning repo...");
       clone.clone().then((_) {
@@ -185,7 +184,7 @@ class GitWrapper {
    */
   void commitWrapper(List<String> args) {
     getRepo().then((ObjectStore store) {
-      if(store == null) {
+      if (store == null) {
         _gitnuOutput.printLine("git: Not a git repository.");
         return;
       } else {
@@ -222,6 +221,9 @@ class GitWrapper {
         }
 
         Commit.commit(options).then((value) {
+          /**
+           * TODO(@camfitz): Do something with the result.
+           */
           window.console.debug('$value ${value.toString()}');
         });
       }
@@ -232,8 +234,56 @@ class GitWrapper {
 
   }
 
+  /**
+   * Allowable format:
+   * git push [options] [--]
+   * Valid options:
+   * -p <string> [password]
+   * -l <string> [username]
+   */
   void pushWrapper(List<String> args) {
+    getRepo().then((ObjectStore store) {
+      if (store == null) {
+        _gitnuOutput.printLine("git: Not a git repository.");
+        return;
+      } else {
+        GitOptions options = new GitOptions();
+        options.store = store;
+        options.root = _fileSystem.getCurrentDirectory();
 
+        String password = stringSwitch(args, '-p', "");
+        if (password == null) {
+          _gitnuOutput.printLine("Error: no option included with -p.");
+          return;
+        } else if (password.length > 0) {
+          options.password = password;
+        }
+
+        String username = stringSwitch(args, '-l', "");
+        if (username == null) {
+          _gitnuOutput.printLine("Error: no option included with -l.");
+          return;
+        } else if (username.length > 0) {
+          options.username = username;
+        }
+
+        String repoUrl = stringSwitch(args, '--url', "");
+        if (repoUrl == null) {
+          _gitnuOutput.printLine("Error: no option included with -l.");
+          return;
+        } else if (repoUrl.length > 0) {
+          options.repoUrl = repoUrl;
+        }
+
+        Push push = new Push();
+        push.push(options).then((value) {
+          /**
+           * TODO(@camfitz): Do something with the result.
+           */
+          window.console.debug("$value");
+        });
+      }
+    });
   }
 
   void pullWrapper(List<String> args) {
@@ -248,7 +298,9 @@ class GitWrapper {
 
   }
 
-  // Progress of the Git call??? How to write this
+  /**
+   * TODO(@camfitz): Implement progressCallback when it is completed in Git.
+   */
   void progressCallback(int progress) {
     window.console.debug("${progress}");
   }
@@ -298,7 +350,10 @@ class GitWrapper {
     if (index != -1) {
       if (args.length > index + 1) {
 
-        // Allows 2 word switch parameters, i.e. names
+        // Allows 2 word switch parameters, i.e. names (special case)
+        /**
+         * TODO(@camfitz): Improve this.
+         */
         if (args[index + 1].startsWith('"') && args.length > index + 2) {
           if (args[index + 2].endsWith('"')) {
             args.removeAt(index);
