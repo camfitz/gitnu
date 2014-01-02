@@ -92,6 +92,10 @@ class GitnuFileSystem {
     return _root.fullPath;
   }
 
+  void pwdCommand(List<String> args) {
+    printDirectory();
+  }
+  
   void printDirectory() {
     _gitnuOutput.printLine(getCurrentDirectoryString());
   }

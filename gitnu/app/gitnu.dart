@@ -50,7 +50,7 @@ class Gitnu {
       'cd': _fileSystem.cdCommand,
       'mkdir': _fileSystem.mkdirCommand,
       'open': _fileSystem.openCommand,
-      'pwd': _fileSystem.printDirectory,
+      'pwd': _fileSystem.pwdCommand,
       'rm': _fileSystem.rmCommand,
       'rmdir': _fileSystem.rmdirCommand,
       'cat': _fileSystem.catCommand,

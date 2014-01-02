@@ -124,16 +124,16 @@ class GitWrapper {
    * --branch <String>
    */
   void cloneWrapper(List<String> args) {
-    if (args[0] == "clone") {
+    if (args[0] == "help") {
       String helpText = """
         usage: git clone [options] [--] &lt;repo&gt;
         <table class="help-list">
           <tr>
-            <td>--depth <int>></td>
+            <td>--depth &lt;int&gt;</td>
             <td>Depth to clone to</td>
           </tr>
           <tr>
-            <td>--branch <string></td>
+            <td>--branch &lt;string&gt;</td>
             <td>Branch to clone</td>
           </tr>
         </table>
@@ -205,15 +205,15 @@ class GitWrapper {
         usage: git commit [options] [--]
         <table class="help-list">
           <tr>
-            <td>-m <string></td>
+            <td>-m &lt;string&gt;</td>
             <td>Message to accompany this commit</td>
           </tr>
           <tr>
-            <td>--email <string></td>
+            <td>--email &lt;string&gt;</td>
             <td>Email to identify committer</td>
           </tr>
           <tr>
-            <td>--name <string></td>
+            <td>--name &lt;string&gt;</td>
             <td>Name to identify committer</td>
           </tr>
         </table>
@@ -286,11 +286,11 @@ class GitWrapper {
         usage: git push [options] [--]
         <table class="help-list">
           <tr>
-            <td>-p <string></td>
+            <td>-p &lt;string&gt;</td>
             <td>Password to authenticate push</td>
           </tr>
           <tr>
-            <td>-l <string></td>
+            <td>-l &lt;string&gt;</td>
             <td>Username to authenticate push</td>
           </tr>
         </table>
