@@ -477,20 +477,6 @@ class GitWrapper {
     int index = args.indexOf(switchName);
     if (index != -1) {
       if (args.length > index + 1) {
-
-        // Allows 2 word switch parameters, i.e. names (special case)
-        /**
-         * TODO(@camfitz): Improve this.
-         */
-        if (args[index + 1].startsWith('"') && args.length > index + 2) {
-          if (args[index + 2].endsWith('"')) {
-            args.removeAt(index);
-            List<String> first_word = args.removeAt(index).split('"');
-            List<String> second_word = args.removeAt(index).split('"');
-            return "${first_word[1]} ${second_word[0]}";
-          }
-        }
-
         args.removeAt(index);
         return args.removeAt(index);
       } else {
