@@ -218,7 +218,7 @@ class GitWrapper {
         window.console.debug("Cloned.");
         _gitnuOutput.printLine("Finished cloning repo.");
       }, onError: (e) {
-        _gitnuOutput.printLine("$e");
+        _gitnuOutput.printLine("Clone error: $e");
       });
     });
   }
@@ -298,6 +298,8 @@ class GitWrapper {
            * TODO(@camfitz): Do something with the result.
            */
           window.console.debug('$value ${value.toString()}');
+        }, onError: (e) {
+          _gitnuOutput.printLine("Commit error: $e");
         });
       }
     });
@@ -372,6 +374,8 @@ class GitWrapper {
            * TODO(@camfitz): Do something with the result.
            */
           window.console.debug("$value");
+        }, onError: (e) {
+          _gitnuOutput.printLine("Push error: $e");
         });
       }
     });
