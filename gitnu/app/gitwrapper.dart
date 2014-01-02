@@ -36,15 +36,20 @@ class GitWrapper {
   final String kEmailStore = "gitEmail";
 
   GitWrapper(this._gitnuOutput, this._fileSystem) {
-    window.console.debug("equals: ${_fileSystem.getRoot() == _fileSystem.getCurrentDirectory()}");
-
     _defaultOptions = new GitOptions();
 
     // Attempt to restore username and email options
     chrome.storage.local.get([kNameStore, kEmailStore]).then((items) {
+      if (items[kNameStore] != null || items[kEmailStore] != null) {
+        _gitnuOutput.printHtml("""Restored options:<br>
+                                  Name- ${items[kNameStore]}<br>
+                                  Email- ${items[kEmailStore]}<br>""");
+      }
       _defaultOptions.name = items[kNameStore];
       _defaultOptions.email = items[kEmailStore];
     });
+    
+    _defaultOptions.progressCallback = progressCallback;
 
     _cmds = {
         'clone': cloneWrapper,
@@ -53,7 +58,8 @@ class GitWrapper {
         'push': pushWrapper,
         'pull': pullWrapper,
         'branch': branchWrapper,
-        'help': helpWrapper
+        'help': helpWrapper,
+        'options': setOptions
     };
 
     git = new Git();
@@ -118,6 +124,33 @@ class GitWrapper {
 
   /**
    * Allowable format:
+   * git options <name> <email>
+   * Sets the name and email in local storage so the options are no
+   * longer required to be included when committing.
+   */
+  void setOptions(List<String> args) {
+    if (args[0] == "help") {
+      String helpText = "usage: git clone &lt;name&gt; &lt;email&gt;";
+      _gitnuOutput.printHtml(helpText);
+      return;
+    }
+    
+    if (args.length != 2) {
+      _gitnuOutput.printLine("Error: wrong number of arguments.");
+      return;
+    }
+    
+    _defaultOptions.name = args[0];
+    _defaultOptions.email = args[1];
+    
+    chrome.storage.local.set({kNameStore: args[0], kEmailStore: args[1]}).then(
+      (_) => _gitnuOutput.printHtml("""Retained options:<br>
+                                        Name- ${args[0]}<br>
+                                        Email- ${args[1]}<br>"""));
+  }
+  
+  /**
+   * Allowable format:
    * git clone [options] [--] <repo>
    * Valid options:
    * --depth <int>
@@ -142,7 +175,7 @@ class GitWrapper {
       return;
     }
     
-    GitOptions options = new GitOptions();
+    GitOptions options = buildOptions();
 
     if (args.length == 0) {
       _gitnuOutput.printLine("Error: no arguments passed to git clone.");
@@ -170,7 +203,6 @@ class GitWrapper {
       return;
     }
 
-    options.progressCallback = progressCallback;
     options.root = _fileSystem.getCurrentDirectory();
     options.repoUrl = args[0];
     options.store = new ObjectStore(_fileSystem.getCurrentDirectory());
@@ -227,7 +259,7 @@ class GitWrapper {
         _gitnuOutput.printLine("git: Not a git repository.");
         return;
       } else {
-        GitOptions options = new GitOptions();
+        GitOptions options = buildOptions();
         options.store = store;
         options.root = _fileSystem.getCurrentDirectory();
 
@@ -304,7 +336,7 @@ class GitWrapper {
         _gitnuOutput.printLine("git: Not a git repository.");
         return;
       } else {
-        GitOptions options = new GitOptions();
+        GitOptions options = buildOptions();
         options.store = store;
         options.root = _fileSystem.getCurrentDirectory();
 
@@ -382,6 +414,9 @@ class GitWrapper {
           <td>help</td>
           <td>Display help contents</td>
         </tr>
+        <tr>
+          <td>options</td>
+          <td>Retains name and email options in local storage</td>
         <tr>
           <td>add</td>
           <td>[TBA] Add file contents to the index</td>
