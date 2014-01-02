@@ -157,7 +157,7 @@ class GitWrapper {
    * --branch <String>
    */
   void cloneWrapper(List<String> args) {
-    if (args[0] == "help") {
+    if (args.length > 0 && args[0] == "help") {
       String helpText = """
         usage: git clone [options] [--] &lt;repo&gt;
         <table class="help-list">
@@ -217,6 +217,8 @@ class GitWrapper {
       clone.clone().then((_) {
         window.console.debug("Cloned.");
         _gitnuOutput.printLine("Finished cloning repo.");
+      }, onError: (e) {
+        _gitnuOutput.printLine("$e");
       });
     });
   }
@@ -232,7 +234,7 @@ class GitWrapper {
    * --name <string>
    */
   void commitWrapper(List<String> args) {
-    if (args[0] == "help") {
+    if (args.length > 0 && args[0] == "help") {
       String helpText = """
         usage: git commit [options] [--]
         <table class="help-list">
@@ -313,7 +315,7 @@ class GitWrapper {
    * -l <string> [username]
    */
   void pushWrapper(List<String> args) {
-    if (args[0] == "help") {
+    if (args.length > 0 && args[0] == "help") {
       String helpText = """
         usage: git push [options] [--]
         <table class="help-list">
