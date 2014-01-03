@@ -278,9 +278,7 @@ class GitWrapper {
         }
 
         Commit.commit(options).then((value) {
-          /**
-           * TODO(@camfitz): Do something with the result.
-           */
+          // TODO(@camfitz): Do something with the result.
           window.console.debug('$value ${value.toString()}');
         }, onError: (e) {
           _gitnuOutput.printLine("Commit error: $e");
@@ -352,9 +350,7 @@ class GitWrapper {
 
         Push push = new Push();
         push.push(options).then((value) {
-          /**
-           * TODO(@camfitz): Do something with the result.
-           */
+          // TODO(@camfitz): Do something with the result.
           window.console.debug("$value");
         }, onError: (e) {
           _gitnuOutput.printLine("Push error: $e");
@@ -394,9 +390,7 @@ class GitWrapper {
         options.root = _fileSystem.getCurrentDirectory();
 
         Branch.branch(options).then((value) {
-          /**
-           * TODO(@camfitz): Do something with the result.
-           */
+          // TODO(@camfitz): Do something with the result.
           window.console.debug("$value");
         }, onError: (e) {
           _gitnuOutput.printLine("Branch error: $e");
@@ -431,9 +425,7 @@ class GitWrapper {
     _gitnuOutput.printHtml(helpText);
   }
 
-  /**
-   * TODO(@camfitz): Implement progressCallback when it is completed in Git.
-   */
+  // TODO(@camfitz): Implement progressCallback when it is completed in Git.
   void progressCallback(int progress) {
     window.console.debug("${progress}");
   }
