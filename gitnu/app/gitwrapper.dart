@@ -85,7 +85,7 @@ class GitWrapper {
 
   /**
    * Loads the ObjectStore associated with a Git repo for the current
-   * directory. Returns null if the directory was not a Git directory.
+   * directory. Completes null if the directory was not a Git directory.
    * Returns a future ObjectStore.
    */
   Future<ObjectStore> _getRepo() {
@@ -95,14 +95,8 @@ class GitWrapper {
       ObjectStore store = new ObjectStore(_fileSystem.getCurrentDirectory());
       _fileSystem.getCurrentDirectory().getDirectory(".git").then(
         (DirectoryEntry gitDir) {
-          store.load().then((value) {
-            // Restored Git ObjectStore.
-            completer.complete(store);
-          });
-        }, onError: (e) {
-          // Not a Git directory.
-          completer.complete(null);
-        });
+          store.load().then((value) => completer.complete(store));
+        }, onError: (e) => completer.complete(null));
     }
 
     repoOperation();
@@ -110,15 +104,14 @@ class GitWrapper {
   }
 
   /**
-   * TODO(@camfitz): Finalise basic implementation of this method.
+   * Provides a partially populated GitOptions object including
+   * email, name and progressCallback from default options.
    */
   GitOptions buildOptions() {
     GitOptions custom = new GitOptions();
-
     custom.email = _defaultOptions.email;
     custom.name = _defaultOptions.name;
     custom.progressCallback = _defaultOptions.progressCallback;
-
     return custom;
   }
 
@@ -158,19 +151,11 @@ class GitWrapper {
    */
   void cloneWrapper(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
-      String helpText = """
-        usage: git clone [options] [--] &lt;repo&gt;
+      String helpText = """usage: git clone [options] [--] &lt;repo&gt;
         <table class="help-list">
-          <tr>
-            <td>--depth &lt;int&gt;</td>
-            <td>Depth to clone to</td>
-          </tr>
-          <tr>
-            <td>--branch &lt;string&gt;</td>
-            <td>Branch to clone</td>
-          </tr>
-        </table>
-      """;
+          <tr><td>--depth &lt;int&gt;</td><td>Depth to clone to</td></tr>
+          <tr><td>--branch &lt;string&gt;</td><td>Branch to clone</td></tr>
+        </table>""";
       _gitnuOutput.printHtml(helpText);
       return;
     }
@@ -235,8 +220,7 @@ class GitWrapper {
    */
   void commitWrapper(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
-      String helpText = """
-        usage: git commit [options] [--]
+      String helpText = """usage: git commit [options] [--]
         <table class="help-list">
           <tr>
             <td>-m &lt;string&gt;</td>
@@ -250,8 +234,7 @@ class GitWrapper {
             <td>--name &lt;string&gt;</td>
             <td>Name to identify committer</td>
           </tr>
-        </table>
-      """;
+        </table>""";
       _gitnuOutput.printHtml(helpText);
       return;
     }
@@ -318,8 +301,7 @@ class GitWrapper {
    */
   void pushWrapper(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
-      String helpText = """
-        usage: git push [options] [--]
+      String helpText = """usage: git push [options] [--]
         <table class="help-list">
           <tr>
             <td>-p &lt;string&gt;</td>
@@ -329,8 +311,7 @@ class GitWrapper {
             <td>-l &lt;string&gt;</td>
             <td>Username to authenticate push</td>
           </tr>
-        </table>
-      """;
+        </table>""";
       _gitnuOutput.printHtml(helpText);
       return;
     }
@@ -390,20 +371,11 @@ class GitWrapper {
   }
 
   void helpWrapper(List<String> args) {
-    String helpText = """
-      usage: git &lt;command&gt; [&lt;args&gt;]
-      <br><br>
+    String helpText = """usage: git &lt;command&gt; [&lt;args&gt;]<br><br>
       This app implements a subset of all git commands, as listed:
-      <br>
       <table class="help-list">
-        <tr>
-          <td>clone</td>
-          <td>Clone a repository into a new directory</td>
-        </tr>
-        <tr>
-          <td>commit</td>
-          <td>Record changes to the repository</td>
-        </tr>
+        <tr><td>clone</td><td>Clone a repository into a new directory</td></tr>
+        <tr><td>commit</td><td>Record changes to the repository</td></tr>
         <tr>
           <td>push</td>
           <td>Update remote refs along with associated objects</td>
@@ -413,22 +385,14 @@ class GitWrapper {
           <td>Fetch from and merge with another repository</td>
         </tr>
         <tr>
-          <td>branch</td>
-          <td>List, create, or delete branches</td>
+          <td>branch</td><td>List, create, or delete branches</td>
         </tr>
-        <tr>
-          <td>help</td>
-          <td>Display help contents</td>
-        </tr>
+        <tr><td>help</td><td>Display help contents</td></tr>
         <tr>
           <td>options</td>
           <td>Retains name and email options in local storage</td>
-        <tr>
-          <td>add</td>
-          <td>[TBA] Add file contents to the index</td>
-        </tr>
-      </table>
-    """;
+        <tr><td>add</td><td>[TBA] Add file contents to the index</td></tr>
+      </table>""";
     _gitnuOutput.printHtml(helpText);
   }
 
