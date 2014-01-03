@@ -7,6 +7,7 @@ import 'lib/spark/spark/ide/app/lib/git/options.dart';
 import 'lib/spark/spark/ide/app/lib/git/git.dart';
 import 'lib/spark/spark/ide/app/lib/git/objectstore.dart';
 
+import 'lib/spark/spark/ide/app/lib/git/commands/branch.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/clone.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/commit.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/push.dart';
@@ -366,8 +367,42 @@ class GitWrapper {
 
   }
 
+  /**
+   * Allowable format:
+   * git branch <branch-name>
+   */
   void branchWrapper(List<String> args) {
+    if (args.length > 0 && args[0] == "help") {
+      String helpText = """usage: git branch &lt;branch-name&gt;""";
+      _gitnuOutput.printHtml(helpText);
+      return;
+    }
+    
+    _getRepo().then((ObjectStore store) {
+      if (store == null) {
+        _gitnuOutput.printLine("git: Not a git repository.");
+        return;
+      } else {
+        GitOptions options = buildOptions();
 
+        if (args.length == 0) {
+          _gitnuOutput.printLine("Error: no branch name passed to git branch.");
+          return;
+        }
+
+        options.store = store;
+        options.root = _fileSystem.getCurrentDirectory();
+
+        Branch.branch(options).then((value) {
+          /**
+           * TODO(@camfitz): Do something with the result.
+           */
+          window.console.debug("$value");
+        }, onError: (e) {
+          _gitnuOutput.printLine("Branch error: $e");
+        });
+      }
+    });
   }
 
   void helpWrapper(List<String> args) {
