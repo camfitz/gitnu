@@ -10,6 +10,7 @@ import 'lib/spark/spark/ide/app/lib/git/objectstore.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/branch.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/clone.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/commit.dart';
+import 'lib/spark/spark/ide/app/lib/git/commands/pull.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/push.dart';
 
 import 'package:chrome_gen/chrome_app.dart' as chrome;
@@ -293,7 +294,7 @@ class GitWrapper {
 
   /**
    * Allowable format:
-   * git push [options] [--]
+   * git push [options]
    * Valid options:
    * -p <string> [password]
    * -l <string> [username]
@@ -339,14 +340,8 @@ class GitWrapper {
         } else if (username.length > 0) {
           options.username = username;
         }
-
-        String repoUrl = stringSwitch(args, '--url', "");
-        if (repoUrl == null) {
-          _gitnuOutput.printLine("Error: no option included with -l.");
-          return;
-        } else if (repoUrl.length > 0) {
-          options.repoUrl = repoUrl;
-        }
+        
+        // TODO(@camfitz): Option to push to URL --url
 
         Push push = new Push();
         push.push(options).then((value) {
@@ -359,8 +354,64 @@ class GitWrapper {
     });
   }
 
+  /**
+   * Allowable format:
+   * git push [options]
+   * Valid options:
+   * -p <string> [password]
+   * -l <string> [username]
+   */
   void pullWrapper(List<String> args) {
+    if (args.length > 0 && args[0] == "help") {
+      String helpText = """usage: git pull [options]
+        <table class="help-list">
+          <tr>
+            <td>-p &lt;string&gt;</td>
+            <td>Password to authenticate pull</td>
+          </tr>
+          <tr>
+            <td>-l &lt;string&gt;</td>
+            <td>Username to authenticate pull</td>
+          </tr>
+        </table>""";
+      _gitnuOutput.printHtml(helpText);
+      return;
+    }
+    
+    _getRepo().then((ObjectStore store) {
+      if (store == null) {
+        _gitnuOutput.printLine("git: Not a git repository.");
+        return;
+      } else {
+        GitOptions options = buildOptions();
+        options.store = store;
+        options.root = _fileSystem.getCurrentDirectory();
 
+        String password = stringSwitch(args, '-p', "");
+        if (password == null) {
+          _gitnuOutput.printLine("Error: no option included with -p.");
+          return;
+        } else if (password.length > 0) {
+          options.password = password;
+        }
+
+        String username = stringSwitch(args, '-l', "");
+        if (username == null) {
+          _gitnuOutput.printLine("Error: no option included with -l.");
+          return;
+        } else if (username.length > 0) {
+          options.username = username;
+        }
+
+        Pull pull = new Pull(options);
+        pull.pull().then((value) {
+          // TODO(@camfitz): Do something with the result.
+          window.console.debug("$value");
+        }, onError: (e) {
+          _gitnuOutput.printLine("Push error: $e");
+        });
+      }
+    });
   }
 
   /**
