@@ -1,8 +1,7 @@
 import 'dart:html';
 
 class StaticToolkit {
-  StaticToolkit() {
-  }
+  StaticToolkit();
 
   /**
    * Escapes HTML-special characters of [text] so that the result can be
@@ -24,7 +23,6 @@ class StaticToolkit {
    */
   static void writeOutput(String h, OutputElement output, DivElement scrollTo) {
     output.insertAdjacentHtml('beforeEnd', h);
-    // Scrolls screen to ensure input is in view.
     scrollTo.scrollIntoView(ScrollAlignment.TOP);
   }
 }

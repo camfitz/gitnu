@@ -119,7 +119,7 @@ class GitnuTerminal {
         int i = 0;
         int open = -1;
         while (i < args.length) {
-          if (args[i].startsWith('"')) {
+          if (open == -1 && args[i].startsWith('"')) {
             args[i] = args[i].substring(1);
             open = i;
             if (args[i].endsWith('"')) {
@@ -270,7 +270,6 @@ class GitnuTerminal {
     writeOutput('<div>Welcome to Gitnu! (v$_version)</div>');
     writeOutput(new DateTime.now().toLocal().toString());
     writeOutput('<p>Documentation: type "help"</p>');
-
     writeOutput('<p>Initialise a root directory to begin.</p>');
   }
 
