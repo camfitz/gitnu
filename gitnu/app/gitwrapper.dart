@@ -8,6 +8,7 @@ import 'lib/spark/spark/ide/app/lib/git/git.dart';
 import 'lib/spark/spark/ide/app/lib/git/objectstore.dart';
 
 import 'lib/spark/spark/ide/app/lib/git/commands/branch.dart';
+import 'lib/spark/spark/ide/app/lib/git/commands/checkout.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/clone.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/commit.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/pull.dart';
@@ -60,6 +61,8 @@ class GitWrapper {
         'push': pushWrapper,
         'pull': pullWrapper,
         'branch': branchWrapper,
+        'merge': mergeWrapper,
+        'checkout': checkoutWrapper,
         'help': helpWrapper,
         'options': setOptions
     };
@@ -416,9 +419,10 @@ class GitWrapper {
 
   /**
    * Allowable format:
-   * git branch <branch-name>
+   * git branch [<branch-name>]
    */
   void branchWrapper(List<String> args) {
+    // TODO(@camfitz): Add option for no args (print branches)
     if (args.length > 0 && args[0] == "help") {
       String helpText = """usage: git branch &lt;branch-name&gt;""";
       _gitnuOutput.printHtml(helpText);
@@ -439,12 +443,74 @@ class GitWrapper {
 
         options.store = store;
         options.root = _fileSystem.getCurrentDirectory();
+        options.branchName = args[0];
 
         Branch.branch(options).then((value) {
           // TODO(@camfitz): Do something with the result.
           window.console.debug("$value");
         }, onError: (e) {
           _gitnuOutput.printLine("Branch error: $e");
+        });
+      }
+    });
+  }
+  
+  /**
+   * Allowable format:
+   * git merge <branch-name>
+   */
+  void mergeWrapper(List<String> args) {
+    // TODO(@camfitz): Implement.
+    _gitnuOutput.printLine("git: merge not yet implemented.");
+  }
+  
+  /**
+   * Allowable format:
+   * git checkout [options] <branch-name>
+   * Valid options:
+   * -b <branch-name> [create this branch]
+   */
+  void checkoutWrapper(List<String> args) {
+    if (args.length > 0 && args[0] == "help") {
+      String helpText = """usage: git checkout [options] &lt;branch-name&gt;""";
+      _gitnuOutput.printHtml(helpText);
+      return;
+    }
+    
+    _getRepo().then((ObjectStore store) {
+      if (store == null) {
+        _gitnuOutput.printLine("git: Not a git repository.");
+        return;
+      } else {
+        GitOptions options = buildOptions();
+
+        if (args.length == 0) {
+          _gitnuOutput.printLine("""Error: no branch name passed 
+                                    to git checkout.""");
+          return;
+        }
+        
+        String branchName = stringSwitch(args, '-b', "");
+        if (branchName == null) {
+          _gitnuOutput.printLine("Error: no branch name included with -b.");
+          return;
+        } else if (branchName.length > 0) {
+          options.branchName = branchName;
+          // TODO(@camfitz): Fix potential timing problem here.
+          branchWrapper([branchName]);
+          checkoutWrapper([branchName]);
+          return;
+        }
+
+        options.store = store;
+        options.root = _fileSystem.getCurrentDirectory();
+        options.branchName = args[0];
+        
+        Checkout.checkout(options).then((value) {
+          // TODO(@camfitz): Do something with the result.
+          window.console.debug("$value");
+        }, onError: (e) {
+          _gitnuOutput.printLine("Checkout error: $e");
         });
       }
     });
