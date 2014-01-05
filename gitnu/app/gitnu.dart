@@ -20,8 +20,7 @@ class Gitnu {
   // Button ID- click to choose root file path.
   final String kChooseDirButton = "#choose_dir";
 
-  Gitnu() {
-  }
+  Gitnu();
 
   void run() {
     _term = new GitnuTerminal('#input-line', '#output', '#cmdline',
@@ -32,8 +31,7 @@ class Gitnu {
     _fileSystem = new GitnuFileSystem(kFilePathDiv, _gitnuOutput);
     InputElement chooseDirButton = document.querySelector(kChooseDirButton);
     chooseDirButton.onClick.listen((_) {
-      _fileSystem.promptUserForFolderAccess(
-          _fileSystem.kRootFolder, setRoot);
+      _fileSystem.promptUserForFolderAccess(_fileSystem.kRootFolder, setRoot);
     });
 
     _gitWrapper = new GitWrapper(_gitnuOutput, _fileSystem);
@@ -50,7 +48,7 @@ class Gitnu {
       'cd': _fileSystem.cdCommand,
       'mkdir': _fileSystem.mkdirCommand,
       'open': _fileSystem.openCommand,
-      'pwd': _fileSystem.printDirectory,
+      'pwd': _fileSystem.pwdCommand,
       'rm': _fileSystem.rmCommand,
       'rmdir': _fileSystem.rmdirCommand,
       'cat': _fileSystem.catCommand,

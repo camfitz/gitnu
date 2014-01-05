@@ -114,6 +114,37 @@ class GitnuTerminal {
         args = cmdline.split(' ');
         cmd = args[0];
         args.removeRange(0, 1);
+        
+        // Special fix for using "" around string params.
+        int i = 0;
+        int open = -1;
+        while (i < args.length) {
+          if (open == -1 && args[i].startsWith('"')) {
+            args[i] = args[i].substring(1);
+            open = i;
+            if (args[i].endsWith('"')) {
+              args[i] = args[i].substring(0, args[i].length - 1);
+              open = -1;
+            }
+            i++;
+          } else if (open != -1 && args[i].endsWith('"')) {
+            String pop = args.removeAt(i);
+            args[open] = args[open] + " " + pop.substring(0, pop.length - 1);
+            open = -1;
+          } else if (open != -1) {
+            args[open] = args[open] + " " + args.removeAt(i);
+          } else {
+            i++;
+          }
+        }
+        
+        // Unfinished "" set.
+        if (open != -1) {
+          writeOutput('${StaticToolkit.htmlEscape(cmd)}: unfinished "" set.');
+          window.scrollTo(0, window.innerHeight);
+          _cmdLine.scrollIntoView(ScrollAlignment.TOP);
+          return;
+        }
       }
 
       // Function look up
@@ -239,7 +270,6 @@ class GitnuTerminal {
     writeOutput('<div>Welcome to Gitnu! (v$_version)</div>');
     writeOutput(new DateTime.now().toLocal().toString());
     writeOutput('<p>Documentation: type "help"</p>');
-
     writeOutput('<p>Initialise a root directory to begin.</p>');
   }
 
