@@ -55,16 +55,16 @@ class GitWrapper {
     _defaultOptions.progressCallback = progressCallback;
 
     _cmds = {
-        'clone': cloneWrapper,
-        'commit': commitWrapper,
-        'add': addWrapper,
-        'push': pushWrapper,
-        'pull': pullWrapper,
-        'branch': branchWrapper,
-        'merge': mergeWrapper,
-        'checkout': checkoutWrapper,
-        'help': helpWrapper,
-        'options': setOptions
+        "clone": cloneCommand,
+        "commit": commitCommand,
+        "add": addCommand,
+        "push": pushCommand,
+        "pull": pullCommand,
+        "branch": branchCommand,
+        "merge": mergeCommand,
+        "checkout": checkoutCommand,
+        "help": helpCommand,
+        "options": setCommand
     };
 
     git = new Git();
@@ -76,15 +76,15 @@ class GitWrapper {
    * git args[0] args[1..n] = git command [args]
    */
   void gitDispatcher(List<String> args) {
-    if(args.length > 0) {
+    if (args.length > 0) {
       String gitOption = args.removeAt(0);
       if (_cmds[gitOption] is Function) {
         _cmds[gitOption](args);
       } else  {
-        _gitnuOutput.printLine('git: \'$gitOption\' is not a git command.');
+        _gitnuOutput.printLine("git: '$gitOption' is not a git command.");
       }
     } else {
-      helpWrapper(args);
+      helpCommand(args);
     }
   }
 
@@ -96,15 +96,12 @@ class GitWrapper {
   Future<ObjectStore> _getRepo() {
     var completer = new Completer.sync();
 
-    repoOperation() {
-      ObjectStore store = new ObjectStore(_fileSystem.getCurrentDirectory());
-      _fileSystem.getCurrentDirectory().getDirectory(".git").then(
-        (DirectoryEntry gitDir) {
-          store.load().then((value) => completer.complete(store));
-        }, onError: (e) => completer.complete(null));
-    }
+    ObjectStore store = new ObjectStore(_fileSystem.getCurrentDirectory());
+    _fileSystem.getCurrentDirectory().getDirectory(".git").then(
+      (DirectoryEntry gitDir) {
+        store.load().then((_) => completer.complete(store));
+      }, onError: (e) => completer.complete(null));
 
-    repoOperation();
     return completer.future;
   }
 
@@ -126,7 +123,7 @@ class GitWrapper {
    * Sets the name and email in local storage so the options are no
    * longer required to be included when committing.
    */
-  void setOptions(List<String> args) {
+  void setCommand(List<String> args) {
     if (args[0] == "help") {
       String helpText = "usage: git clone &lt;name&gt; &lt;email&gt;";
       _gitnuOutput.printHtml(helpText);
@@ -154,7 +151,7 @@ class GitWrapper {
    * --depth <int>
    * --branch <String>
    */
-  void cloneWrapper(List<String> args) {
+  void cloneCommand(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
       String helpText = """usage: git clone [options] [--] &lt;repo&gt;
         <table class="help-list">
@@ -172,7 +169,7 @@ class GitWrapper {
       return;
     }
 
-    int depth = intSwitch(args, '--depth', -1);
+    int depth = intSwitch(args, "--depth", -1);
     if (depth == null) {
       _gitnuOutput.printLine("Error: no option included with --depth.");
       return;
@@ -180,7 +177,7 @@ class GitWrapper {
       options.depth = depth;
     }
 
-    String branch = stringSwitch(args, '--branch', "");
+    String branch = stringSwitch(args, "--branch", "");
     if (branch == null) {
       _gitnuOutput.printLine("Error: no option included with --branch.");
       return;
@@ -199,13 +196,11 @@ class GitWrapper {
     Clone clone = new Clone(options);
     options.store.init().then((_) {
       /**
-       * TODO(@camfitz): Replace console debug with progress callback on screen,
+       * TODO(camfitz): Replace console debug with progress callback on screen,
        * awaiting callback implementation in Git library.
        */
-      window.console.debug("Cloning...");
       _gitnuOutput.printLine("Cloning repo...");
       clone.clone().then((_) {
-        window.console.debug("Cloned.");
         _gitnuOutput.printLine("Finished cloning repo.");
       }, onError: (e) {
         _gitnuOutput.printLine("Clone error: $e");
@@ -223,7 +218,7 @@ class GitWrapper {
    * --email <string>
    * --name <string>
    */
-  void commitWrapper(List<String> args) {
+  void commitCommand(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
       String helpText = """usage: git commit [options] [--]
         <table class="help-list">
@@ -248,51 +243,54 @@ class GitWrapper {
       if (store == null) {
         _gitnuOutput.printLine("git: Not a git repository.");
         return;
-      } else {
-        GitOptions options = buildOptions();
-        options.store = store;
-        options.root = _fileSystem.getCurrentDirectory();
-
-        options.commitMessage = stringSwitch(args, '-m', "");
-        if (options.commitMessage == null) {
-          _gitnuOutput.printLine("Error: no option included with -m.");
-          return;
-        }
-
-        String email = stringSwitch(args, '--email', "");
-        if (email == null) {
-          _gitnuOutput.printLine("Error: no option included with --email.");
-          return;
-        } else if (email.length > 0) {
-          options.email = email;
-        } else if (options.email == null) {
-          _gitnuOutput.printLine("Error: no email provided.");
-          return;
-        }
-
-        String name = stringSwitch(args, '--name', "");
-        if (name == null) {
-          _gitnuOutput.printLine("Error: no option included with --name.");
-          return;
-        } else if (name.length > 0) {
-          options.name = name;
-        } else if (options.name == null) {
-          _gitnuOutput.printLine("Error: no name provided.");
-          return;
-        }
-
-        Commit.commit(options).then((value) {
-          // TODO(@camfitz): Do something with the result.
-          window.console.debug('$value ${value.toString()}');
-        }, onError: (e) {
-          _gitnuOutput.printLine("Commit error: $e");
-        });
       }
+
+      GitOptions options = buildOptions();
+      options.store = store;
+      options.root = _fileSystem.getCurrentDirectory();
+
+      options.commitMessage = stringSwitch(args, "-m", "");
+      if (options.commitMessage == null) {
+        _gitnuOutput.printLine("Error: no option included with -m.");
+        return;
+      }
+
+      String email = stringSwitch(args, "--email", "");
+      if (email == null) {
+        _gitnuOutput.printLine("Error: no option included with --email.");
+        return;
+      } else if (email.length > 0) {
+        options.email = email;
+      } else if (options.email == null) {
+        _gitnuOutput.printLine("Error: no email provided.");
+        return;
+      }
+
+      String name = stringSwitch(args, "--name", "");
+      if (name == null) {
+        _gitnuOutput.printLine("Error: no option included with --name.");
+        return;
+      } else if (name.length > 0) {
+        options.name = name;
+      } else if (options.name == null) {
+        _gitnuOutput.printLine("Error: no name provided.");
+        return;
+      }
+
+      _gitnuOutput.printLine("Committing.");
+      Commit.commit(options).then((value) {
+        // TODO(camfitz): Do something with the result.
+        _gitnuOutput.printLine("Commit success: $value");
+        window.console.debug("$value ${value.toString()}");
+      }, onError: (e) {
+        _gitnuOutput.printLine("Commit error: $e");
+      });
     });
   }
 
-  void addWrapper(List<String> args) {
-
+  void addCommand(List<String> args) {
+    // TODO(camfitz): Implement.
+    _gitnuOutput.printLine("git: add not yet implemented.");
   }
 
   /**
@@ -302,7 +300,7 @@ class GitWrapper {
    * -p <string> [password]
    * -l <string> [username]
    */
-  void pushWrapper(List<String> args) {
+  void pushCommand(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
       String helpText = """usage: git push [options] [--]
         <table class="help-list">
@@ -323,37 +321,37 @@ class GitWrapper {
       if (store == null) {
         _gitnuOutput.printLine("git: Not a git repository.");
         return;
-      } else {
-        GitOptions options = buildOptions();
-        options.store = store;
-        options.root = _fileSystem.getCurrentDirectory();
-
-        String password = stringSwitch(args, '-p', "");
-        if (password == null) {
-          _gitnuOutput.printLine("Error: no option included with -p.");
-          return;
-        } else if (password.length > 0) {
-          options.password = password;
-        }
-
-        String username = stringSwitch(args, '-l', "");
-        if (username == null) {
-          _gitnuOutput.printLine("Error: no option included with -l.");
-          return;
-        } else if (username.length > 0) {
-          options.username = username;
-        }
-
-        // TODO(@camfitz): Option to push to URL --url
-
-        Push push = new Push();
-        push.push(options).then((value) {
-          // TODO(@camfitz): Do something with the result.
-          window.console.debug("$value");
-        }, onError: (e) {
-          _gitnuOutput.printLine("Push error: $e");
-        });
       }
+
+      GitOptions options = buildOptions();
+      options.store = store;
+      options.root = _fileSystem.getCurrentDirectory();
+
+      String password = stringSwitch(args, "-p", "");
+      if (password == null) {
+        _gitnuOutput.printLine("Error: no option included with -p.");
+        return;
+      } else if (password.length > 0) {
+        options.password = password;
+      }
+
+      String username = stringSwitch(args, "-l", "");
+      if (username == null) {
+        _gitnuOutput.printLine("Error: no option included with -l.");
+        return;
+      } else if (username.length > 0) {
+        options.username = username;
+      }
+
+      // TODO(camfitz): Option to push to URL --url
+
+      Push push = new Push();
+      push.push(options).then((value) {
+        // TODO(camfitz): Do something with the result.
+        window.console.debug("$value");
+      }, onError: (e) {
+        _gitnuOutput.printLine("Push error: $e");
+      });
     });
   }
 
@@ -364,7 +362,7 @@ class GitWrapper {
    * -p <string> [password]
    * -l <string> [username]
    */
-  void pullWrapper(List<String> args) {
+  void pullCommand(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
       String helpText = """usage: git pull [options]
         <table class="help-list">
@@ -385,35 +383,35 @@ class GitWrapper {
       if (store == null) {
         _gitnuOutput.printLine("git: Not a git repository.");
         return;
-      } else {
-        GitOptions options = buildOptions();
-        options.store = store;
-        options.root = _fileSystem.getCurrentDirectory();
-
-        String password = stringSwitch(args, '-p', "");
-        if (password == null) {
-          _gitnuOutput.printLine("Error: no option included with -p.");
-          return;
-        } else if (password.length > 0) {
-          options.password = password;
-        }
-
-        String username = stringSwitch(args, '-l', "");
-        if (username == null) {
-          _gitnuOutput.printLine("Error: no option included with -l.");
-          return;
-        } else if (username.length > 0) {
-          options.username = username;
-        }
-
-        Pull pull = new Pull(options);
-        pull.pull().then((value) {
-          // TODO(@camfitz): Do something with the result.
-          window.console.debug("$value");
-        }, onError: (e) {
-          _gitnuOutput.printLine("Push error: $e");
-        });
       }
+
+      GitOptions options = buildOptions();
+      options.store = store;
+      options.root = _fileSystem.getCurrentDirectory();
+
+      String password = stringSwitch(args, "-p", "");
+      if (password == null) {
+        _gitnuOutput.printLine("Error: no option included with -p.");
+        return;
+      } else if (password.length > 0) {
+        options.password = password;
+      }
+
+      String username = stringSwitch(args, "-l", "");
+      if (username == null) {
+        _gitnuOutput.printLine("Error: no option included with -l.");
+        return;
+      } else if (username.length > 0) {
+        options.username = username;
+      }
+
+      Pull pull = new Pull(options);
+      pull.pull().then((value) {
+        // TODO(camfitz): Do something with the result.
+        window.console.debug("$value");
+      }, onError: (e) {
+        _gitnuOutput.printLine("Push error: $e");
+      });
     });
   }
 
@@ -421,8 +419,8 @@ class GitWrapper {
    * Allowable format:
    * git branch [<branch-name>]
    */
-  void branchWrapper(List<String> args) {
-    // TODO(@camfitz): Add option for no args (print branches)
+  void branchCommand(List<String> args) {
+    // TODO(camfitz): Add option for no args (print branches)
     if (args.length > 0 && args[0] == "help") {
       String helpText = """usage: git branch &lt;branch-name&gt;""";
       _gitnuOutput.printHtml(helpText);
@@ -433,25 +431,25 @@ class GitWrapper {
       if (store == null) {
         _gitnuOutput.printLine("git: Not a git repository.");
         return;
-      } else {
-        GitOptions options = buildOptions();
-
-        if (args.length == 0) {
-          _gitnuOutput.printLine("Error: no branch name passed to git branch.");
-          return;
-        }
-
-        options.store = store;
-        options.root = _fileSystem.getCurrentDirectory();
-        options.branchName = args[0];
-
-        Branch.branch(options).then((value) {
-          // TODO(@camfitz): Do something with the result.
-          window.console.debug("$value");
-        }, onError: (e) {
-          _gitnuOutput.printLine("Branch error: $e");
-        });
       }
+
+      GitOptions options = buildOptions();
+
+      if (args.length == 0) {
+        _gitnuOutput.printLine("Error: no branch name passed to git branch.");
+        return;
+      }
+
+      options.store = store;
+      options.root = _fileSystem.getCurrentDirectory();
+      options.branchName = args[0];
+
+      Branch.branch(options).then((value) {
+        // TODO(camfitz): Do something with the result.
+        window.console.debug("$value");
+      }, onError: (e) {
+        _gitnuOutput.printLine("Branch error: $e");
+      });
     });
   }
 
@@ -459,8 +457,8 @@ class GitWrapper {
    * Allowable format:
    * git merge <branch-name>
    */
-  void mergeWrapper(List<String> args) {
-    // TODO(@camfitz): Implement.
+  void mergeCommand(List<String> args) {
+    // TODO(camfitz): Implement.
     _gitnuOutput.printLine("git: merge not yet implemented.");
   }
 
@@ -470,7 +468,7 @@ class GitWrapper {
    * Valid options:
    * -b <branch-name> [create this branch]
    */
-  void checkoutWrapper(List<String> args) {
+  void checkoutCommand(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
       String helpText = """usage: git checkout [options] &lt;branch-name&gt;""";
       _gitnuOutput.printHtml(helpText);
@@ -481,42 +479,42 @@ class GitWrapper {
       if (store == null) {
         _gitnuOutput.printLine("git: Not a git repository.");
         return;
-      } else {
-        GitOptions options = buildOptions();
-
-        if (args.length == 0) {
-          _gitnuOutput.printLine("""Error: no branch name passed 
-                                    to git checkout.""");
-          return;
-        }
-
-        String branchName = stringSwitch(args, '-b', "");
-        if (branchName == null) {
-          _gitnuOutput.printLine("Error: no branch name included with -b.");
-          return;
-        } else if (branchName.length > 0) {
-          options.branchName = branchName;
-          // TODO(@camfitz): Fix potential timing problem here.
-          branchWrapper([branchName]);
-          checkoutWrapper([branchName]);
-          return;
-        }
-
-        options.store = store;
-        options.root = _fileSystem.getCurrentDirectory();
-        options.branchName = args[0];
-
-        Checkout.checkout(options).then((value) {
-          // TODO(@camfitz): Do something with the result.
-          window.console.debug("$value");
-        }, onError: (e) {
-          _gitnuOutput.printLine("Checkout error: $e");
-        });
       }
+
+      GitOptions options = buildOptions();
+
+      if (args.length == 0) {
+        _gitnuOutput.printLine("""Error: no branch name passed 
+                                  to git checkout.""");
+        return;
+      }
+
+      String branchName = stringSwitch(args, "-b", "");
+      if (branchName == null) {
+        _gitnuOutput.printLine("Error: no branch name included with -b.");
+        return;
+      } else if (branchName.length > 0) {
+        options.branchName = branchName;
+        // TODO(camfitz): Fix potential timing problem here.
+        branchCommand([branchName]);
+        checkoutCommand([branchName]);
+        return;
+      }
+
+      options.store = store;
+      options.root = _fileSystem.getCurrentDirectory();
+      options.branchName = args[0];
+
+      Checkout.checkout(options).then((value) {
+        // TODO(camfitz): Do something with the result.
+        window.console.debug("$value");
+      }, onError: (e) {
+        _gitnuOutput.printLine("Checkout error: $e");
+      });
     });
   }
 
-  void helpWrapper(List<String> args) {
+  void helpCommand(List<String> args) {
     String helpText = """usage: git &lt;command&gt; [&lt;args&gt;]<br><br>
       This app implements a subset of all git commands, as listed:
       <table class="help-list">
@@ -542,7 +540,7 @@ class GitWrapper {
     _gitnuOutput.printHtml(helpText);
   }
 
-  // TODO(@camfitz): Implement progressCallback when it is completed in Git.
+  // TODO(camfitz): Implement progressCallback when it is completed in Git.
   void progressCallback(int progress) {
     window.console.debug("${progress}");
   }
@@ -558,7 +556,7 @@ class GitWrapper {
     String switchValue = switchFinder(args, switchName);
     if(switchValue == "") {
       return defaultValue;
-    } else if (switchValue[0] != '-') {
+    } else if (switchValue[0] != "-") {
       return switchValue;
     }
     return null;
