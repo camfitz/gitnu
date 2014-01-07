@@ -164,29 +164,17 @@ class GitWrapper {
 
     GitOptions options = buildOptions();
 
-    if (args.length == 0) {
-      _gitnuOutput.printLine("Error: no arguments passed to git clone.");
-      return;
-    }
-
-    int depth = intSwitch(args, "--depth", -1);
-    if (depth == null) {
-      _gitnuOutput.printLine("Error: no option included with --depth.");
-      return;
-    } else if (depth > 0) {
-      options.depth = depth;
-    }
-
-    String branch = stringSwitch(args, "--branch", "");
-    if (branch == null) {
-      _gitnuOutput.printLine("Error: no option included with --branch.");
-      return;
-    } else if (branch.length > 0) {
-      options.branchName = branch;
-    }
-
-    if (args.length != 1) {
-      _gitnuOutput.printLine("Error: no repo url passed to git clone.");
+    try {
+      if (args.length == 0) {
+        throw new FormatException("no arguments passed to git clone.");
+      }
+      options.depth = intSwitch(args, "--depth", options.depth);
+      options.branchName = stringSwitch(args, "--branch", options.branchName);
+      if (args.length != 1) {
+        throw new FormatException("no repo url passed to git clone.");
+      }
+    } catch (e) {
+      _gitnuOutput.printLine("Error: ${e.message}");
       return;
     }
 
@@ -249,31 +237,18 @@ class GitWrapper {
       options.store = store;
       options.root = _fileSystem.getCurrentDirectory();
 
-      options.commitMessage = stringSwitch(args, "-m", "");
-      if (options.commitMessage == null) {
-        _gitnuOutput.printLine("Error: no option included with -m.");
-        return;
-      }
-
-      String email = stringSwitch(args, "--email", "");
-      if (email == null) {
-        _gitnuOutput.printLine("Error: no option included with --email.");
-        return;
-      } else if (email.length > 0) {
-        options.email = email;
-      } else if (options.email == null) {
-        _gitnuOutput.printLine("Error: no email provided.");
-        return;
-      }
-
-      String name = stringSwitch(args, "--name", "");
-      if (name == null) {
-        _gitnuOutput.printLine("Error: no option included with --name.");
-        return;
-      } else if (name.length > 0) {
-        options.name = name;
-      } else if (options.name == null) {
-        _gitnuOutput.printLine("Error: no name provided.");
+      try {
+        options.commitMessage = stringSwitch(args, "-m", options.commitMessage);
+        options.email = stringSwitch(args, "--email", options.email);
+        if (options.email == null) {
+          throw new Exception("no email provided");
+        }
+        options.name = stringSwitch(args, "--name", options.name);
+        if (options.name == null) {
+          throw new Exception("no name provided");
+        }
+      } catch (e) {
+        _gitnuOutput.printLine("Error: ${e.message}");
         return;
       }
 
@@ -281,7 +256,6 @@ class GitWrapper {
       Commit.commit(options).then((value) {
         // TODO(camfitz): Do something with the result.
         _gitnuOutput.printLine("Commit success: $value");
-        window.console.debug("$value ${value.toString()}");
       }, onError: (e) {
         _gitnuOutput.printLine("Commit error: $e");
       });
@@ -299,6 +273,7 @@ class GitWrapper {
    * Valid options:
    * -p <string> [password]
    * -l <string> [username]
+   * --url <string> [repo url]
    */
   void pushCommand(List<String> args) {
     if (args.length > 0 && args[0] == "help") {
@@ -327,23 +302,14 @@ class GitWrapper {
       options.store = store;
       options.root = _fileSystem.getCurrentDirectory();
 
-      String password = stringSwitch(args, "-p", "");
-      if (password == null) {
-        _gitnuOutput.printLine("Error: no option included with -p.");
+      try {
+        options.password = stringSwitch(args, "-p", options.password);
+        options.username = stringSwitch(args, "-l", options.username);
+        options.repoUrl = stringSwitch(args, "--url", options.repoUrl);
+      } catch (e) {
+        _gitnuOutput.printLine("Error: ${e.message}");
         return;
-      } else if (password.length > 0) {
-        options.password = password;
       }
-
-      String username = stringSwitch(args, "-l", "");
-      if (username == null) {
-        _gitnuOutput.printLine("Error: no option included with -l.");
-        return;
-      } else if (username.length > 0) {
-        options.username = username;
-      }
-
-      // TODO(camfitz): Option to push to URL --url
 
       Push push = new Push();
       push.push(options).then((value) {
@@ -389,20 +355,12 @@ class GitWrapper {
       options.store = store;
       options.root = _fileSystem.getCurrentDirectory();
 
-      String password = stringSwitch(args, "-p", "");
-      if (password == null) {
-        _gitnuOutput.printLine("Error: no option included with -p.");
+      try {
+        options.password = stringSwitch(args, "-p", options.password);
+        options.username = stringSwitch(args, "-l", options.username);
+      } catch (e) {
+        _gitnuOutput.printLine("Error: ${e.message}");
         return;
-      } else if (password.length > 0) {
-        options.password = password;
-      }
-
-      String username = stringSwitch(args, "-l", "");
-      if (username == null) {
-        _gitnuOutput.printLine("Error: no option included with -l.");
-        return;
-      } else if (username.length > 0) {
-        options.username = username;
       }
 
       Pull pull = new Pull(options);
@@ -483,21 +441,20 @@ class GitWrapper {
 
       GitOptions options = buildOptions();
 
-      if (args.length == 0) {
-        _gitnuOutput.printLine("""Error: no branch name passed 
-                                  to git checkout.""");
-        return;
-      }
-
-      String branchName = stringSwitch(args, "-b", "");
-      if (branchName == null) {
-        _gitnuOutput.printLine("Error: no branch name included with -b.");
-        return;
-      } else if (branchName.length > 0) {
-        options.branchName = branchName;
-        // TODO(camfitz): Fix potential timing problem here.
-        branchCommand([branchName]);
-        checkoutCommand([branchName]);
+      try {
+        if (args.length == 0) {
+          throw new FormatException(
+              "no branch name passed to git checkout.");
+        }
+        options.branchName = stringSwitch(args, "-b", options.branchName);
+        if (options.branchName.length > 0) {
+          // TODO(camfitz): Fix potential timing problem here.
+          branchCommand([options.branchName]);
+          checkoutCommand([options.branchName]);
+          return;
+        }
+      } catch (e) {
+        _gitnuOutput.printLine("Error: ${e.message}");
         return;
       }
 
@@ -507,7 +464,7 @@ class GitWrapper {
 
       Checkout.checkout(options).then((value) {
         // TODO(camfitz): Do something with the result.
-        window.console.debug("$value");
+        _gitnuOutput.printLine("Checkout success: $value");
       }, onError: (e) {
         _gitnuOutput.printLine("Checkout error: $e");
       });
@@ -553,13 +510,18 @@ class GitWrapper {
    */
   String stringSwitch(List<String> args, String switchName,
                       String defaultValue) {
-    String switchValue = switchFinder(args, switchName);
-    if(switchValue == "") {
-      return defaultValue;
-    } else if (switchValue[0] != "-") {
-      return switchValue;
+    try {
+      String switchValue = switchFinder(args, switchName);
+      if(switchValue == "") {
+        return defaultValue;
+      } else if (switchValue[0] != "-") {
+        return switchValue;
+      } else {
+        throw new FormatException("no parameter included with $switchName");
+      }
+    } catch (e) {
+      throw e;
     }
-    return null;
   }
 
   /**
@@ -569,13 +531,19 @@ class GitWrapper {
    * Returns the switch parameter int if switch is present.
    */
   int intSwitch(List<String> args, String switchName, int defaultValue) {
-    String switchValue = switchFinder(args, switchName);
-    if (switchValue == "") {
-      return defaultValue;
-    } else if (int.parse(switchValue, onError: (value) { return -1;}) != -1) {
-      return int.parse(switchValue);
+    try {
+      String switchValue = switchFinder(args, switchName);
+      if (switchValue == "") {
+        return defaultValue;
+      } else if (int.parse(switchValue, onError: (value) { return -1;}) != -1) {
+        return int.parse(switchValue);
+      } else {
+        throw new FormatException(
+            "integer parameter required for $switchName");
+      }
+    } catch (e) {
+      throw e;
     }
-    return null;
   }
 
   /**
@@ -592,7 +560,7 @@ class GitWrapper {
         args.removeAt(index);
         return args.removeAt(index);
       } else {
-        return null;
+        throw new FormatException("no parameter included with $switchName");
       }
     } else {
       return "";
