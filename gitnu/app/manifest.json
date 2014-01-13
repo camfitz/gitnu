@@ -4,8 +4,26 @@
   "version": "0.1",
   "manifest_version": 2,
   "permissions": [
+    "https://www.google-analytics.com/",
+    "https://github.com/*",
+    "clipboardRead",
+    "clipboardWrite",
+    {
+      "fileSystem": [
+        "write",
+        "retainEntries",
+        "directory"
+      ]
+    },
+    {
+      "socket": [
+        "tcp-connect",
+        "tcp-listen"
+      ]
+    },
     "storage",
-    {"fileSystem": ["write", "retainEntries", "directory"]}
+    "webview",
+    "contextMenus"
   ],
   "app": {
     "background": {

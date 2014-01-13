@@ -80,10 +80,22 @@ class GitnuFileSystem {
     return _cwd.fullPath;
   }
 
+  DirectoryEntry getRoot() {
+    return _root;
+  }
+
+  DirectoryEntry getCurrentDirectory() {
+    return _cwd;
+  }
+
   String getRootString() {
     return _root.fullPath;
   }
 
+  void pwdCommand(List<String> args) {
+    printDirectory();
+  }
+  
   void printDirectory() {
     _gitnuOutput.printLine(getCurrentDirectoryString());
   }

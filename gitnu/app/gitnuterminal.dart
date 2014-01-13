@@ -239,7 +239,6 @@ class GitnuTerminal {
     writeOutput('<div>Welcome to Gitnu! (v$_version)</div>');
     writeOutput(new DateTime.now().toLocal().toString());
     writeOutput('<p>Documentation: type "help"</p>');
-
     writeOutput('<p>Initialise a root directory to begin.</p>');
   }
 

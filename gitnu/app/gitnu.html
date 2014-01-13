@@ -5,7 +5,7 @@
     <title>Gitnu - Git interactive terminal not unix</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Navbar styles! -->
+    <!-- Navbar styles -->
     <link rel="stylesheet" href="lib/bootstrap/css/bootstrap.css" />
     
     <!-- Terminal styles -->
@@ -38,17 +38,21 @@
           <li><a>Path: <input type="text" id="file_path" 
             value="Directory choice required." readonly></a></li>
         </ul>
-      </div><!--/.nav-collapse -->
+      </div>
     </div>
   </div>
 
   <div id="container">
     <output id="output"></output>
     <div id="input-line" class="input-line">
-      <div class="prompt">$&gt;</div><div><input id="cmdline" class="cmdline" 
-        tabindex="1" autofocus /></div>
+      <div class="prompt">$&gt;</div>
+      <div><input id="cmdline" class="cmdline" tabindex="1" autofocus /></div>
     </div>
   </div>
+  
+  <!-- zlib libraries for Git operations -->
+  <script type="text/javascript" src="lib/spark/spark/ide/app/git/third_party/zlib_deflate.js"></script>
+  <script type="text/javascript" src="lib/spark/spark/ide/app/git/third_party/zlib_inflate.js"></script> 
   
   <script type="text/javascript" src="packages/browser/interop.js"></script>  
   <script type="application/dart" src="gitnu.dart"></script>

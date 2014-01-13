@@ -32,3 +32,8 @@
 .ls-files {
   -webkit-column-count: 3;
 }
+
+.help-list td {
+  padding-left: 10px;
+  padding-right: 10px;
+}
