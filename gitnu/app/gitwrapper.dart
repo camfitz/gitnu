@@ -534,7 +534,6 @@ class GitWrapper {
     if (int.parse(switchValue, onError: (value) { return -1;}) != -1)
       return int.parse(switchValue);
     throw new FormatException("integer parameter required for $switchName");
-
   }
 
   /**
