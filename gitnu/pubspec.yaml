@@ -6,4 +6,5 @@ dependencies:
   chrome_gen: any
   crc32: any
   crypto: any
+  unittest: any
   utf: any

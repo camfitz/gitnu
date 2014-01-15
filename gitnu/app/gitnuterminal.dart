@@ -4,6 +4,7 @@ import 'dart:html';
 import 'dart:async';
 import 'dart:math';
 import 'statictoolkit.dart';
+import 'stringutils.dart';
 
 class GitnuTerminal {
   String _cmdLineContainer;
@@ -106,24 +107,23 @@ class GitnuTerminal {
       String cmdline = _input.value;
       _input.value = ""; // clear input
 
-      // Parse out command, args, and trim off whitespace.
-      List<String> args;
-      String cmd = "";
-      if (!cmdline.isEmpty) {
-        cmdline.trim();
-        args = cmdline.split(' ');
-        cmd = args[0];
-        args.removeRange(0, 1);
-      }
+      List<String> args = StringUtils.parseCommandLine(cmdline);
 
-      // Function look up
-      if (_cmds[cmd] is Function) {
-        _cmds[cmd](cmd, args);
-      } else if (_extCmds[cmd] is Function) {
-        // Pass our output writing function to the parent function.
-        _extCmds[cmd](args);
-      } else {
-        writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
+      if (args == null) {
+        writeOutput('Error: "unfinished quotation set.');
+      } else if (!args.isEmpty) {
+        String cmd = args.removeAt(0);
+
+        // Function look up
+        if (_cmds[cmd] is Function) {
+          _cmds[cmd](cmd, args);
+        } else if (_extCmds[cmd] is Function) {
+          // Pass our output writing function to the parent function.
+          // TODO (camfitz): Wrap this in a future.
+          _extCmds[cmd](args);
+        } else if (!cmd.isEmpty) {
+          writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
+        }
       }
 
       window.scrollTo(0, window.innerHeight);
@@ -243,11 +243,12 @@ class GitnuTerminal {
   }
 
   /**
-   * Wraps around the StaticToolkit writer function as we have access to the
-   * output stream and cmdLine element here.
+   * Writes to output element and then scrolls into view of the scrollTo
+   * element.
    */
   void writeOutput(String h) {
-    StaticToolkit.writeOutput(h, _output, _cmdLine);
+    _output.insertAdjacentHtml('beforeEnd', h);
+    _cmdLine.scrollIntoView(ScrollAlignment.TOP);
   }
 
   /**

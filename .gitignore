@@ -2,3 +2,10 @@ packages/**/*
 packages/
 gitnu/.buildlog
 gitnu/app/lib/spark/*
+gitnu/build/*
+gitnu/app/gitnu.dart.js
+gitnu/app/gitnu.dart.js.deps
+gitnu/app/gitnu.dart.js.map
+gitnu/app/gitnu.dart.precompiled.js
+gitnu/test/packages
+gitnu/web/*

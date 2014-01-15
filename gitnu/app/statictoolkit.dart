@@ -1,4 +1,4 @@
-import 'dart:html';
+library StaticToolkit;
 
 class StaticToolkit {
   StaticToolkit();
@@ -15,14 +15,5 @@ class StaticToolkit {
           .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
               .replaceAll("'", "&apos;");
-  }
-
-  /**
-   * Writes to output element and then scrolls into view of the scrollTo
-   * element.
-   */
-  static void writeOutput(String h, OutputElement output, DivElement scrollTo) {
-    output.insertAdjacentHtml('beforeEnd', h);
-    scrollTo.scrollIntoView(ScrollAlignment.TOP);
   }
 }
