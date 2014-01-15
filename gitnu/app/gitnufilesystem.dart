@@ -92,10 +92,11 @@ class GitnuFileSystem {
     return _root.fullPath;
   }
 
-  void pwdCommand(List<String> args) {
+  Future pwdCommand(List<String> args) {
     printDirectory();
+    return new Future.value();
   }
-  
+
   void printDirectory() {
     _gitnuOutput.printLine(getCurrentDirectoryString());
   }
@@ -172,7 +173,7 @@ class GitnuFileSystem {
     doOutput().printLine('Error: ${msg}');
   }
 
-  void catCommand(List<String> args) {
+  Future catCommand(List<String> args) {
     if (args.length >= 1) {
       var fileName = args[0];
       read('cat', fileName, (result) {
@@ -181,19 +182,22 @@ class GitnuFileSystem {
     } else {
       doOutput().printLine('usage: cat filename');
     }
+    return new Future.value();
   }
 
-  void cdCommand(List<String> args) {
+  Future cdCommand(List<String> args) {
     var dest = args.join(' ').trim();
     if (dest.isEmpty) {
       dest = '/';
     }
 
-    _cwd.getDirectory(dest).then((DirectoryEntry dirEntry) {
+    return _cwd.getDirectory(dest).then((DirectoryEntry dirEntry) {
         _cwd = dirEntry;
         printDirectory();
+        return new Future.value();
       }, onError: (FileError error) {
         invalidOpForEntryType(error, "cd", dest);
+        return new Future.value();
       });
   }
 
@@ -201,28 +205,34 @@ class GitnuFileSystem {
    * Why the looped call?
    * https://developer.mozilla.org/en-US/docs/Web/API/DirectoryReader
    */
-  void lsCommand(List<String> args) {
+  Future lsCommand(List<String> args) {
     List<Entry> entries = [];
     DirectoryReader reader = _cwd.createReader();
+    Completer completer = new Completer();
 
     void readEntries() {
       reader.readEntries().then((List<Entry> results) {
         if (results.length == 0) {
           entries.sort((a, b) => a.name.compareTo(b.name));
           doOutput().printColumns(entries);
+          completer.complete();
         } else {
           entries.addAll(results);
           readEntries();
         }
-      }, onError: errorHandler);
+      }, onError: (e) {
+        errorHandler(e);
+        completer.complete();
+      });
     };
 
     readEntries();
+    return completer.future;
   }
 
-  void createDirectory(DirectoryEntry rootDirEntry, List<String> folders) {
+  Future createDirectory(DirectoryEntry rootDirEntry, List<String> folders) {
     if (folders.length == 0) {
-      return;
+      return new Future.value();
     }
     rootDirEntry.createDirectory(folders[0]).then((dirEntry) {
       // Recursively add the new subfolder if we still have a subfolder to
@@ -234,7 +244,7 @@ class GitnuFileSystem {
     }, onError: errorHandler);
   }
 
-  void mkdirCommand(List<String> args) {
+  Future mkdirCommand(List<String> args) {
     var dashP = false;
     var index = args.indexOf('-p');
     if (index != -1) {
@@ -244,7 +254,7 @@ class GitnuFileSystem {
 
     if (args.length == 0) {
       doOutput().printLine('usage: mkdir [-p] directory');
-      return;
+      return new Future.value();
     }
 
     // Create each directory passed as an argument.
@@ -257,24 +267,25 @@ class GitnuFileSystem {
         if (folders[0] == '.' || folders[0] == '') {
           folders.removeAt(0);
         }
-        createDirectory(_cwd, folders);
+        return createDirectory(_cwd, folders);
       } else {
-        _cwd.createDirectory(dirName, exclusive: true).then(
-            (_) {}, onError: (FileError error) {
+        return _cwd.createDirectory(dirName, exclusive: true).then(
+            (_) => new Future.value(), onError: (FileError error) {
             invalidOpForEntryType(error, "mkdir", dirName);
+            return new Future.value();
         });
       }
     }
   }
 
-  void openCommand(List<String> args) {
+  Future openCommand(List<String> args) {
     //var fileName = Strings.join(args, ' ').trim();
     if (args.length == 0) {
       doOutput().printLine('usage: open [filenames]');
-      return;
+      return new Future.value();
     } else {
       doOutput().printLine('Implementation of open is not yet working.');
-      return;
+      return new Future.value();
     }
 
     void openWindow(String fileName, String url) {
@@ -284,6 +295,8 @@ class GitnuFileSystem {
     args.forEach((fileName) {
       open("open", fileName, openWindow);
     });
+
+    return new Future.value();
   }
 
   void open(String cmd, String path, Function successCallback) {
@@ -298,7 +311,7 @@ class GitnuFileSystem {
         });
   }
 
-  void rmCommand(List<String> args) {
+  Future rmCommand(List<String> args) {
     // Remove recursively? If so, remove the flag(s) from the arg list.
     List<String> switches = ['-r', '-rf', '-fr'];
     int originalLength = args.length;
@@ -323,9 +336,11 @@ class GitnuFileSystem {
             }
           });
     });
+
+    return new Future.value();
   }
 
-  void rmdirCommand(List<String> args) {
+  Future rmdirCommand(List<String> args) {
     args.forEach((dirName) {
       _cwd.getDirectory(dirName).then((dirEntry) {
             dirEntry.remove().then((_) {}, onError: (error) {
@@ -338,5 +353,7 @@ class GitnuFileSystem {
           },
           onError: (error) => invalidOpForEntryType(error, "rmdir", dirName));
     });
+
+    return new Future.value();
   }
 }

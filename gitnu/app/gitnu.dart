@@ -24,7 +24,7 @@ class Gitnu {
 
   void run() {
     _term = new GitnuTerminal('#input-line', '#output', '#cmdline',
-                              '#container');
+                              '#container', '#prompt');
 
     _gitnuOutput = new GitnuOutput(_term.writeOutput);
 

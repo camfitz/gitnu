@@ -14,6 +14,7 @@ class GitnuTerminal {
   OutputElement _output;
   InputElement _input;
   DivElement _cmdLine;
+  DivElement _prompt;
   DivElement _containerDiv;
   String _version = '0.0.1';
   List<String> _history = [];
@@ -22,14 +23,15 @@ class GitnuTerminal {
   Map<String, Function> _extCmds;
 
   GitnuTerminal(this._cmdLineContainer, this._outputContainer,
-      this._cmdLineInput, this._container) {
+      this._cmdLineInput, this._container, String prompt) {
     _cmdLine = document.querySelector(_cmdLineContainer);
     _output = document.querySelector(_outputContainer);
     _input = document.querySelector(_cmdLineInput);
     _containerDiv = document.querySelector(_container);
+    _prompt = document.querySelector(prompt);
 
     // Always force text cursor to end of input line.
-    window.onClick.listen((event) => _cmdLine.focus());
+    window.onClick.listen((event) => _input.focus());
 
     // Trick: Always force text cursor to end of input line.
     _cmdLine.onClick.listen((event) => _input.value = _input.value);
@@ -79,6 +81,24 @@ class GitnuTerminal {
   }
 
   /**
+   * Enables the input prompt and focuses on it.
+   * Displays the prompt indicator "$>"
+   */
+  void enablePrompt() {
+    _input.disabled = false;
+    _prompt.innerHtml = "\$&gt;";
+    _input.focus();
+  }
+
+  /**
+   * Hides the prompt indicator and disables the input prompt.
+   */
+  void disablePrompt() {
+    _input.disabled = true;
+    _prompt.innerHtml = "";
+  }
+
+  /**
    * Handles command input
    * Dispatches a function call either to commandFromList(cmd, args)
    * or commandFromExternalList(cmd, ouputWriter, args) where appropriate.
@@ -106,24 +126,33 @@ class GitnuTerminal {
       _output.children.add(line);
       String cmdline = _input.value;
       _input.value = ""; // clear input
+      disablePrompt();
 
       List<String> args = StringUtils.parseCommandLine(cmdline);
 
       if (args == null) {
         writeOutput('Error: "unfinished quotation set.');
+        enablePrompt();
       } else if (!args.isEmpty) {
         String cmd = args.removeAt(0);
 
         // Function look up
+        /**
+         *  TODO (camfitz): Make _cmds and _extCmds conform to same interface.
+         *  Wrap the whole caller in a function-
+         *    executeCommand(lookupCommand(cmd), args);
+         */
         if (_cmds[cmd] is Function) {
           _cmds[cmd](cmd, args);
+          enablePrompt();
         } else if (_extCmds[cmd] is Function) {
-          // Pass our output writing function to the parent function.
-          // TODO (camfitz): Wrap this in a future.
-          _extCmds[cmd](args);
+          _extCmds[cmd](args).then((_) => enablePrompt());
         } else if (!cmd.isEmpty) {
           writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
+          enablePrompt();
         }
+      } else {
+        enablePrompt();
       }
 
       window.scrollTo(0, window.innerHeight);
