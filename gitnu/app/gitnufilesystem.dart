@@ -19,12 +19,12 @@ class GitnuFileSystem {
 
   // Instance or implementation of GitnuOutput class, permitting print
   // operations
-  GitnuOutput _gitnuOutput;
+  GitnuOutput _output;
 
   // Local storage key for the root folder.
   final String kRootFolder = "rootFolder";
 
-  GitnuFileSystem(String displayFilePath, this._gitnuOutput) {
+  GitnuFileSystem(String displayFilePath, this._output) {
     // Check if we set a rootFolder in a previous use of the app.
     chrome.storage.local.get(kRootFolder).then((items) {
       chrome.fileSystem.isRestorable(items[kRootFolder]).then((value) {
@@ -98,54 +98,38 @@ class GitnuFileSystem {
   }
 
   void printDirectory() {
-    _gitnuOutput.printLine(getCurrentDirectoryString());
-  }
-
-  GitnuOutput doOutput() {
-    return _gitnuOutput;
+    _output.printLine(getCurrentDirectoryString());
   }
 
   void invalidOpForEntryType(FileError error, String cmd, String dest) {
     switch (error.code) {
       case FileError.NOT_FOUND_ERR:
-        doOutput().printLine('${cmd}: ${dest}: No such file or directory');
+        _output.printLine('${cmd}: ${dest}: No such file or directory');
         break;
       case FileError.INVALID_STATE_ERR:
-        doOutput().printLine('${cmd}: ${dest}: Not a directory');
+        _output.printLine('${cmd}: ${dest}: Not a directory');
         break;
       case FileError.INVALID_MODIFICATION_ERR:
-        doOutput().printLine('${cmd}: ${dest}: File already exists');
+        _output.printLine('${cmd}: ${dest}: File already exists');
         break;
       default:
-        errorHandler(error);
+        printError(error);
         break;
     }
   }
 
   /**
    * Reads a file - helper function for the cat command.
-   * Passes read file to callback function.
+   * Returns a future to be populated by a string representation of the file.
+   * Throws FileError for an invalid file (doesn't not exist, is directory).
    */
-  void read(String cmd, String path, Function callback) {
-    _cwd.getFile(path).then((FileEntry fileEntry) {
-      fileEntry.file().then((file) {
-        var reader = new FileReader();
-        reader.onLoadEnd.listen((ProgressEvent event) =>
-            callback(reader.result));
-        reader.readAsText(file);
-      }, onError: errorHandler);
-    }, onError: (error) {
-      if (error.code == FileError.INVALID_STATE_ERR) {
-        doOutput().printLine('${cmd}: ${path}: is a directory');
-      } else if (error.code == FileError.NOT_FOUND_ERR) {
-        invalidOpForEntryType(error.code, cmd, path);
-      } else {
-        errorHandler(error);
-      }
+  Future<String> read(String path) {
+    return _cwd.getFile(path).then((chrome.ChromeFileEntry fileEntry) {
+      return fileEntry.readText();
     });
   }
 
-  void errorHandler(error) {
+  void printError(error) {
     var msg = '';
     switch (error.code) {
       case FileError.QUOTA_EXCEEDED_ERR:
@@ -170,18 +154,37 @@ class GitnuFileSystem {
         msg = 'FileError = ${error.code}: Unknown error.';
         break;
     };
-    doOutput().printLine('Error: ${msg}');
+    _output.printLine('Error: ${msg}');
   }
 
   Future catCommand(List<String> args) {
     if (args.length >= 1) {
       var fileName = args[0];
-      read('cat', fileName, (result) {
-        doOutput().printHtml('<pre>${StaticToolkit.htmlEscape(result)}</pre>');
+      return read(fileName).then((String result) {
+        List<String> lines =
+            "${StaticToolkit.htmlEscape(result)}".split("\n");
+        StringBuffer numberedLines = new StringBuffer();
+        for (int i = 0; i < lines.length; i++)
+          numberedLines.write('${i+1}\r\n');
+
+        _output.printHtml('''<table class="out"><tr>
+                                <td class="line">
+                                  <pre>${numberedLines.toString()}</pre></td>
+                                <td class="file"><pre>$result</pre></td>
+                              </tr></table>''');
+      }, onError: (error) {
+        window.console.debug("error received: $error");
+        if (error.code == FileError.INVALID_STATE_ERR) {
+          _output.printLine('cat: $fileName: is a directory');
+        } else if (error.code == FileError.NOT_FOUND_ERR) {
+          invalidOpForEntryType(error.code, 'cat', fileName);
+        } else {
+          printError(error);
+        }
+        return new Future.value();
       });
-    } else {
-      doOutput().printLine('usage: cat filename');
     }
+    _output.printLine('usage: cat filename');
     return new Future.value();
   }
 
@@ -214,14 +217,14 @@ class GitnuFileSystem {
       reader.readEntries().then((List<Entry> results) {
         if (results.length == 0) {
           entries.sort((a, b) => a.name.compareTo(b.name));
-          doOutput().printColumns(entries);
+          _output.printColumns(entries);
           completer.complete();
         } else {
           entries.addAll(results);
           readEntries();
         }
       }, onError: (e) {
-        errorHandler(e);
+        printError(e);
         completer.complete();
       });
     };
@@ -241,7 +244,7 @@ class GitnuFileSystem {
         folders.removeAt(0);
         createDirectory(dirEntry, folders);
       }
-    }, onError: errorHandler);
+    }, onError: printError);
   }
 
   Future mkdirCommand(List<String> args) {
@@ -253,7 +256,7 @@ class GitnuFileSystem {
     }
 
     if (args.length == 0) {
-      doOutput().printLine('usage: mkdir [-p] directory');
+      _output.printLine('usage: mkdir [-p] directory');
       return new Future.value();
     }
 
@@ -281,10 +284,10 @@ class GitnuFileSystem {
   Future openCommand(List<String> args) {
     //var fileName = Strings.join(args, ' ').trim();
     if (args.length == 0) {
-      doOutput().printLine('usage: open [filenames]');
+      _output.printLine('usage: open [filenames]');
       return new Future.value();
     } else {
-      doOutput().printLine('Implementation of open is not yet working.');
+      _output.printLine('Implementation of open is not yet working.');
       return new Future.value();
     }
 
@@ -304,9 +307,9 @@ class GitnuFileSystem {
       successCallback(path, fileEntry.toUrl());
     }, onError: (error) {
           if (error.code == FileError.NOT_FOUND_ERR) {
-            doOutput().printLine('${cmd}: ${path}: No such file or directory');
+            _output.printLine('${cmd}: ${path}: No such file or directory');
           } else {
-            errorHandler(error);
+            printError(error);
           }
         });
   }
@@ -320,19 +323,19 @@ class GitnuFileSystem {
 
     args.forEach((fileName) {
       _cwd.getFile(fileName).then((fileEntry) {
-            fileEntry.remove().then((_) {}, onError: errorHandler);
+            fileEntry.remove().then((_) {}, onError: printError);
           },
           onError: (error) {
             if (recursive && error.code == FileError.TYPE_MISMATCH_ERR) {
               _cwd.getDirectory(fileName)
               .then((DirectoryEntry dirEntry) =>
                   dirEntry.removeRecursively().then(
-                    (_) {}, onError: errorHandler),
-                    onError: errorHandler);
+                    (_) {}, onError: printError),
+                    onError: printError);
             } else if (error.code == FileError.INVALID_STATE_ERR) {
-              doOutput().printLine('rm: ${fileName}: is a directory');
+              _output.printLine('rm: ${fileName}: is a directory');
             } else {
-              errorHandler(error);
+              printError(error);
             }
           });
     });
@@ -345,9 +348,9 @@ class GitnuFileSystem {
       _cwd.getDirectory(dirName).then((dirEntry) {
             dirEntry.remove().then((_) {}, onError: (error) {
               if (error.code == FileError.INVALID_MODIFICATION_ERR) {
-                doOutput().printLine('rmdir: ${dirName}: Directory not empty');
+                _output.printLine('rmdir: ${dirName}: Directory not empty');
               } else {
-                errorHandler(error);
+                printError(error);
               }
             });
           },

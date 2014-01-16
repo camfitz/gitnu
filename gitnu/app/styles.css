@@ -37,3 +37,28 @@
   padding-left: 10px;
   padding-right: 10px;
 }
+
+pre {
+  background: #000000;
+  border: none;
+  margin: 0;
+  padding: 0;
+  color: #FFFFFF;
+  font-size: 14px;
+  padding-left: 15px;
+  font-family: monospace;
+}
+
+.line {
+  border-right: 1px solid #555555;
+  padding-right: 5px;
+  vertical-align: top;'
+}
+
+.file {
+  vertical-align: top;
+}
+
+.line pre {
+  color: #555555;
+}
