@@ -17,6 +17,7 @@ import 'lib/spark/spark/ide/app/lib/git/commands/push.dart';
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 import 'gitnuoutput.dart';
 import 'gitnufilesystem.dart';
+import 'stringutils.dart';
 
 class GitWrapper {
   // Default options provided when running a Git command.
@@ -44,9 +45,9 @@ class GitWrapper {
     // Attempt to restore username and email options
     chrome.storage.local.get([kNameStore, kEmailStore]).then((items) {
       if (items[kNameStore] != null || items[kEmailStore] != null) {
-        _gitnuOutput.printHtml("""Restored options:<br>
-                                  Name- ${items[kNameStore]}<br>
-                                  Email- ${items[kEmailStore]}<br>""");
+        _gitnuOutput.printHtml("""restored options:<br>
+                                  name- ${items[kNameStore]}<br>
+                                  email- ${items[kEmailStore]}<br>""");
       }
       _defaultOptions.name = items[kNameStore];
       _defaultOptions.email = items[kEmailStore];
@@ -76,7 +77,7 @@ class GitWrapper {
    * git args[0] args[1..n] = git command [args]
    */
   Future gitDispatcher(List<String> args) {
-    if (args.length > 0) {
+    if (!args.isEmpty) {
       String gitOption = args.removeAt(0);
       if (_cmds[gitOption] is Function) {
         return _cmds[gitOption](args);
@@ -125,14 +126,14 @@ class GitWrapper {
    * longer required to be included when committing.
    */
   void setCommand(List<String> args) {
-    if (args[0] == "help") {
+    if (args.isEmpty || args[0] == "help") {
       String helpText = "usage: git clone &lt;name&gt; &lt;email&gt;";
       _gitnuOutput.printHtml(helpText);
       return;
     }
 
     if (args.length != 2) {
-      _gitnuOutput.printLine("Error: wrong number of arguments.");
+      _gitnuOutput.printLine("error: wrong number of arguments.");
       return;
     }
 
@@ -140,9 +141,9 @@ class GitWrapper {
     _defaultOptions.email = args[1];
 
     chrome.storage.local.set({kNameStore: args[0], kEmailStore: args[1]}).then(
-      (_) => _gitnuOutput.printHtml("""Retained options:<br>
-                                        Name- ${args[0]}<br>
-                                        Email- ${args[1]}<br>"""));
+      (_) => _gitnuOutput.printHtml("""retained options:<br>
+                                       name- ${args[0]}<br>
+                                       email- ${args[1]}<br>"""));
   }
 
   /**
@@ -153,11 +154,11 @@ class GitWrapper {
    * --branch <String>
    */
   Future cloneCommand(List<String> args) {
-    if (args.length > 0 && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "help") {
       String helpText = """usage: git clone [options] [--] &lt;repo&gt;
         <table class="help-list">
-          <tr><td>--depth &lt;int&gt;</td><td>Depth to clone to</td></tr>
-          <tr><td>--branch &lt;string&gt;</td><td>Branch to clone</td></tr>
+          <tr><td>--depth &lt;int&gt;</td><td>depth to clone to</td></tr>
+          <tr><td>--branch &lt;string&gt;</td><td>branch to clone</td></tr>
         </table>""";
       _gitnuOutput.printHtml(helpText);
       return new Future.value();
@@ -165,21 +166,22 @@ class GitWrapper {
 
     GitOptions options = buildOptions();
 
-    if (args.length == 0) {
-      _gitnuOutput.printLine("Error: no arguments passed to git clone.");
+    if (args.isEmpty) {
+      _gitnuOutput.printLine("error: no arguments passed to git clone.");
       return new Future.value();
     }
 
     try {
-      options.depth = intSwitch(args, "--depth", options.depth);
-      options.branchName = stringSwitch(args, "--branch", options.branchName);
+      options.depth = StringUtils.intSwitch(args, "depth", options.depth);
+      options.branchName =
+          StringUtils.stringSwitch(args, "branch", options.branchName);
     } catch (e) {
-      _gitnuOutput.printLine("Error: ${e.message}");
+      _gitnuOutput.printLine("error: ${e.message}");
       return new Future.value();
     }
 
     if (args.length != 1) {
-      _gitnuOutput.printLine("Error: no repo url passed to git clone.");
+      _gitnuOutput.printLine("error: no repo url passed to git clone.");
       return new Future.value();
     }
 
@@ -192,12 +194,12 @@ class GitWrapper {
        * TODO(camfitz): Replace console debug with progress callback on screen,
        * awaiting callback implementation in Git library.
        */
-      _gitnuOutput.printLine("Cloning repo...");
+      _gitnuOutput.printLine("cloning repo...");
       return clone.clone().then((_) {
-        _gitnuOutput.printLine("Finished cloning repo.");
+        _gitnuOutput.printLine("finished cloning repo.");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("Clone error: $e");
+        _gitnuOutput.printLine("clone error: $e");
         return new Future.value();
       });
     });
@@ -214,20 +216,20 @@ class GitWrapper {
    * --name <string>
    */
   Future commitCommand(List<String> args) {
-    if (args.length > 0 && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "help") {
       String helpText = """usage: git commit [options] [--]
         <table class="help-list">
           <tr>
             <td>-m &lt;string&gt;</td>
-            <td>Message to accompany this commit</td>
+            <td>message to accompany this commit</td>
           </tr>
           <tr>
             <td>--email &lt;string&gt;</td>
-            <td>Email to identify committer</td>
+            <td>email to identify committer</td>
           </tr>
           <tr>
             <td>--name &lt;string&gt;</td>
-            <td>Name to identify committer</td>
+            <td>name to identify committer</td>
           </tr>
         </table>""";
       _gitnuOutput.printHtml(helpText);
@@ -236,7 +238,7 @@ class GitWrapper {
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: Not a git repository.");
+        _gitnuOutput.printLine("git: not a git repository.");
         return new Future.value();
       }
 
@@ -245,25 +247,27 @@ class GitWrapper {
       options.root = _fileSystem.getCurrentDirectory();
 
       try {
-        options.commitMessage = stringSwitch(args, "-m", options.commitMessage);
-        options.email = stringSwitch(args, "--email", options.email);
+        options.commitMessage =
+            StringUtils.stringSwitch(args, "m", options.commitMessage);
+        options.email =
+            StringUtils.stringSwitch(args, "email", options.email);
         if (options.email == null)
           throw new Exception("no email provided");
-        options.name = stringSwitch(args, "--name", options.name);
+        options.name = StringUtils.stringSwitch(args, "--name", options.name);
         if (options.name == null)
           throw new Exception("no name provided");
       } catch (e) {
-        _gitnuOutput.printLine("Error: ${e.message}");
+        _gitnuOutput.printLine("error: ${e.message}");
         return new Future.value();
       }
 
-      _gitnuOutput.printLine("Committing.");
+      _gitnuOutput.printLine("committing.");
       return Commit.commit(options).then((value) {
         // TODO(camfitz): Do something with the result.
-        _gitnuOutput.printLine("Commit success: $value");
+        _gitnuOutput.printLine("commit success: $value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("Commit error: $e");
+        _gitnuOutput.printLine("commit error: $e");
         return new Future.value();
       });
     });
@@ -284,16 +288,16 @@ class GitWrapper {
    * --url <string> [repo url]
    */
   Future pushCommand(List<String> args) {
-    if (args.length > 0 && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "help") {
       String helpText = """usage: git push [options] [--]
         <table class="help-list">
           <tr>
             <td>-p &lt;string&gt;</td>
-            <td>Password to authenticate push</td>
+            <td>password to authenticate push</td>
           </tr>
           <tr>
             <td>-l &lt;string&gt;</td>
-            <td>Username to authenticate push</td>
+            <td>username to authenticate push</td>
           </tr>
         </table>""";
       _gitnuOutput.printHtml(helpText);
@@ -302,7 +306,7 @@ class GitWrapper {
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: Not a git repository.");
+        _gitnuOutput.printLine("git: not a git repository.");
         return new Future.value();
       }
 
@@ -311,9 +315,12 @@ class GitWrapper {
       options.root = _fileSystem.getCurrentDirectory();
 
       try {
-        options.password = stringSwitch(args, "-p", options.password);
-        options.username = stringSwitch(args, "-l", options.username);
-        options.repoUrl = stringSwitch(args, "--url", options.repoUrl);
+        options.password =
+            StringUtils.stringSwitch(args, "p", options.password);
+        options.username =
+            StringUtils.stringSwitch(args, "l", options.username);
+        options.repoUrl =
+            StringUtils.stringSwitch(args, "url", options.repoUrl);
       } catch (e) {
         _gitnuOutput.printLine("Error: ${e.message}");
         return new Future.value();
@@ -325,7 +332,7 @@ class GitWrapper {
         window.console.debug("$value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("Push error: $e");
+        _gitnuOutput.printLine("push error: $e");
         return new Future.value();
       });
     });
@@ -339,16 +346,16 @@ class GitWrapper {
    * -l <string> [username]
    */
   Future pullCommand(List<String> args) {
-    if (args.length > 0 && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "help") {
       String helpText = """usage: git pull [options]
         <table class="help-list">
           <tr>
             <td>-p &lt;string&gt;</td>
-            <td>Password to authenticate pull</td>
+            <td>password to authenticate pull</td>
           </tr>
           <tr>
             <td>-l &lt;string&gt;</td>
-            <td>Username to authenticate pull</td>
+            <td>username to authenticate pull</td>
           </tr>
         </table>""";
       _gitnuOutput.printHtml(helpText);
@@ -357,7 +364,7 @@ class GitWrapper {
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: Not a git repository.");
+        _gitnuOutput.printLine("git: not a git repository.");
         return new Future.value();
       }
 
@@ -366,10 +373,12 @@ class GitWrapper {
       options.root = _fileSystem.getCurrentDirectory();
 
       try {
-        options.password = stringSwitch(args, "-p", options.password);
-        options.username = stringSwitch(args, "-l", options.username);
+        options.password =
+            StringUtils.stringSwitch(args, "p", options.password);
+        options.username =
+            StringUtils.stringSwitch(args, "l", options.username);
       } catch (e) {
-        _gitnuOutput.printLine("Error: ${e.message}");
+        _gitnuOutput.printLine("error: ${e.message}");
         return new Future.value();
       }
 
@@ -379,7 +388,7 @@ class GitWrapper {
         window.console.debug("$value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("Push error: $e");
+        _gitnuOutput.printLine("push error: $e");
         return new Future.value();
       });
     });
@@ -391,8 +400,8 @@ class GitWrapper {
    */
   Future branchCommand(List<String> args) {
     // TODO(camfitz): Add option for no args (print branches)
-    if (args.length > 0 && args[0] == "help") {
-      String helpText = """usage: git branch &lt;branch-name&gt;""";
+    if (!args.isEmpty && args[0] == "help") {
+      String helpText = "usage: git branch &lt;branch-name&gt;";
       _gitnuOutput.printHtml(helpText);
       return new Future.value();
     }
@@ -405,8 +414,8 @@ class GitWrapper {
 
       GitOptions options = buildOptions();
 
-      if (args.length == 0) {
-        _gitnuOutput.printLine("Error: no branch name passed to git branch.");
+      if (args.isEmpty) {
+        _gitnuOutput.printLine("error: no branch name passed to git branch.");
         return new Future.value();
       }
 
@@ -419,7 +428,7 @@ class GitWrapper {
         window.console.debug("$value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("Branch error: $e");
+        _gitnuOutput.printLine("branch error: $e");
         return new Future.value();
       });
     });
@@ -442,27 +451,28 @@ class GitWrapper {
    * -b <branch-name> [create this branch]
    */
   Future checkoutCommand(List<String> args) {
-    if (args.length > 0 && args[0] == "help") {
-      String helpText = """usage: git checkout [options] &lt;branch-name&gt;""";
+    if (!args.isEmpty && args[0] == "help") {
+      String helpText = "usage: git checkout [options] &lt;branch-name&gt;";
       _gitnuOutput.printHtml(helpText);
       return new Future.value();
     }
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: Not a git repository.");
+        _gitnuOutput.printLine("git: not a git repository.");
         return new Future.value();
       }
 
       GitOptions options = buildOptions();
 
-      if (args.length == 0) {
+      if (args.isEmpty) {
         _gitnuOutput.printLine("no branch name passed to git checkout.");
         return new Future.value();
       }
 
       try {
-        options.branchName = stringSwitch(args, "-b", options.branchName);
+        options.branchName =
+            StringUtils.stringSwitch(args, "b", options.branchName);
         if (options.branchName.length > 0) {
           // TODO(camfitz): Fix potential timing problem here.
           return branchCommand([options.branchName]).then((_) {
@@ -470,7 +480,7 @@ class GitWrapper {
           });
         }
       } catch (e) {
-        _gitnuOutput.printLine("Error: ${e.message}");
+        _gitnuOutput.printLine("error: ${e.message}");
         return new Future.value();
       }
 
@@ -480,10 +490,10 @@ class GitWrapper {
 
       return Checkout.checkout(options).then((value) {
         // TODO(camfitz): Do something with the result.
-        _gitnuOutput.printLine("Checkout success: $value");
+        _gitnuOutput.printLine("checkout success: $value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("Checkout error: $e");
+        _gitnuOutput.printLine("checkout error: $e");
         return new Future.value();
       });
     });
@@ -491,26 +501,26 @@ class GitWrapper {
 
   Future helpCommand(List<String> args) {
     String helpText = """usage: git &lt;command&gt; [&lt;args&gt;]<br><br>
-      This app implements a subset of all git commands, as listed:
+      this app implements a subset of all git commands, as listed:
       <table class="help-list">
-        <tr><td>clone</td><td>Clone a repository into a new directory</td></tr>
-        <tr><td>commit</td><td>Record changes to the repository</td></tr>
+        <tr><td>clone</td><td>clone a repository into a new directory</td></tr>
+        <tr><td>commit</td><td>record changes to the repository</td></tr>
         <tr>
           <td>push</td>
           <td>Update remote refs along with associated objects</td>
         </tr>
         <tr>
           <td>pull</td>
-          <td>Fetch from and merge with another repository</td>
+          <td>fetch from and merge with another repository</td>
         </tr>
         <tr>
-          <td>branch</td><td>List, create, or delete branches</td>
+          <td>branch</td><td>list, create, or delete branches</td>
         </tr>
-        <tr><td>help</td><td>Display help contents</td></tr>
+        <tr><td>help</td><td>display help contents</td></tr>
         <tr>
           <td>options</td>
-          <td>Retains name and email options in local storage</td>
-        <tr><td>add</td><td>[TBA] Add file contents to the index</td></tr>
+          <td>retains name and email options in local storage</td>
+        <tr><td>add</td><td>[TBA] add file contents to the index</td></tr>
       </table>""";
     _gitnuOutput.printHtml(helpText);
     return new Future.value();
@@ -519,55 +529,5 @@ class GitWrapper {
   // TODO(camfitz): Implement progressCallback when it is completed in Git.
   void progressCallback(int progress) {
     window.console.debug("${progress}");
-  }
-
-  /**
-   * Searches the args list for a switch that includes a string parameter.
-   * Returns defaultValue string if the switch is not present.
-   * Returns null if the switch is present with no argument.
-   * Returns the switch parameter string if switch is present.
-   */
-  String stringSwitch(List<String> args, String switchName,
-                      String defaultValue) {
-    String switchValue = switchFinder(args, switchName);
-    if(switchValue == "")
-      return defaultValue;
-    if (switchValue[0] != "-")
-      return switchValue;
-    throw new FormatException("no parameter included with $switchName");
-  }
-
-  /**
-   * Searches the args list for a switch that includes an int parameter.
-   * Returns defaultValue if the switch is not present.
-   * Returns null if the switch is present with no argument.
-   * Returns the switch parameter int if switch is present.
-   */
-  int intSwitch(List<String> args, String switchName, int defaultValue) {
-    String switchValue = switchFinder(args, switchName);
-    if (switchValue == "")
-      return defaultValue;
-    if (int.parse(switchValue, onError: (value) { return -1;}) != -1)
-      return int.parse(switchValue);
-    throw new FormatException("integer parameter required for $switchName");
-  }
-
-  /**
-   * Searches the args list for a switch that includes a parameter.
-   * Returns the empty string if the switch is missing a parameter. This is
-   * an error case.
-   * Returns null if the switch is not present. Continue execution.
-   * Returns the parameter string if found.
-   */
-  String switchFinder(List<String> args, String switchName) {
-    int index = args.indexOf(switchName);
-    if (index != -1) {
-      if (args.length > index + 1) {
-        args.removeAt(index);
-        return args.removeAt(index);
-      }
-      throw new FormatException("no parameter included with $switchName");
-    }
-    return "";
   }
 }

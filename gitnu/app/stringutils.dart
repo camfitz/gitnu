@@ -63,7 +63,65 @@ class StringUtils {
     if (wordFormed)
       result.add(currentArg);
     if (inside)
-      return null;  // unamatched "$currentQuote"
+      return null; // unmatched "$currentQuote"
     return result;
+  }
+
+  /**
+   * Searches the args list for a switch that includes a string parameter, if
+   * found the switch and its parameter are removed from the list.
+   * Returns defaultValue string if the switch is not present.
+   * Throws FormatException if the switch is present with no parameter.
+   * Throws FormatException if the switch is present with invalid parameter.
+   * Returns the switch parameter string if switch is present.
+   */
+  static String stringSwitch(List<String> args, String switchName,
+                             String defaultValue) {
+    String switchValue = switchFinder(args, switchName);
+    if(switchValue == "")
+      return defaultValue;
+    // A valid parameter is any string that is not itself a switch.
+    if (switchValue[0] != "-")
+      return switchValue;
+    throw new FormatException("invalid parameter $switchValue for $switchName");
+  }
+
+  /**
+   * Searches the args list for a switch that includes an int parameter, if
+   * found the switch and its parameter are removed from the list.
+   * Returns defaultValue if the switch is not present.
+   * Throws FormatException if the switch is present with no parameter.
+   * Throws FormatException if the switch is present with invalid parameter.
+   * Returns the switch parameter int if switch is present.
+   */
+  static int intSwitch(List<String> args, String switchName, int defaultValue) {
+    String switchValue = switchFinder(args, switchName);
+    if (switchValue == "")
+      return defaultValue;
+    if (int.parse(switchValue, onError: (value) => -1) != -1)
+      return int.parse(switchValue);
+    throw new FormatException("invalid parameter $switchValue for $switchName");
+  }
+
+  /**
+   * Searches the args list for a switch that includes a parameter, if found
+   * removes the switch and its parameter from the list.
+   * Throws FormatException if the switch is present with no parameter.
+   * Returns the empty string if the switch is not present.
+   * Returns the parameter string if found.
+   */
+  static String switchFinder(List<String> args, String switchName) {
+    String prepend = '-';
+    if (switchName.length > 1)
+      prepend = '--';
+    int index = args.indexOf(prepend + switchName);
+    if (index != -1) {
+      if (index + 1 < args.length) {
+        args.removeAt(index);
+        return args.removeAt(index);
+      }
+      throw new FormatException("no parameter included with $switchName");
+    }
+    return "";
   }
 }
