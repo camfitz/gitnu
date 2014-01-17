@@ -56,16 +56,17 @@ class GitWrapper {
     _defaultOptions.progressCallback = progressCallback;
 
     _cmds = {
+        "add": addCommand,
+        "branch": branchCommand,
+        "checkout": checkoutCommand,
         "clone": cloneCommand,
         "commit": commitCommand,
-        "add": addCommand,
-        "push": pushCommand,
-        "pull": pullCommand,
-        "branch": branchCommand,
-        "merge": mergeCommand,
-        "checkout": checkoutCommand,
         "help": helpCommand,
-        "options": setCommand
+        "merge": mergeCommand,
+        "options": setCommand,
+        "pull": pullCommand,
+        "push": pushCommand,
+        "status": statusCommand
     };
 
     git = new Git();
@@ -499,6 +500,43 @@ class GitWrapper {
     });
   }
 
+  /**
+   * Allowable format:
+   * git status
+   */
+  Future statusCommand(List<String> args) {
+    if (!args.isEmpty && args[0] == "--help") {
+      String helpText = "usage: git status [--help]";
+      _gitnuOutput.printHtml(helpText);
+      return new Future.value();
+    }
+
+    return _getRepo().then((ObjectStore store) {
+      if (store == null) {
+        _gitnuOutput.printLine("git: not a git repository.");
+        return new Future.value();
+      }
+      return store.getCurrentBranch().then((String currentBranch) {
+        _gitnuOutput.printLine("On branch $currentBranch");
+        return store.getHeadRef().then((String headRefName) {
+          return store.getHeadForRef(headRefName).then((String parent) {
+            return Commit.walkFiles(_fileSystem.getCurrentDirectory(),
+                                    store).then((String sha) {
+              return Commit.checkTreeChanged(store, parent, sha).then((_) {
+                // TODO(camfitz): Expand this message to show changed files.
+                _gitnuOutput.printLine("repo has changes to commit");
+              }, onError: (e) {
+                if (e == "commits_no_changes")
+                  _gitnuOutput.printLine(
+                      "nothing to commit, working directory clean");
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
   Future helpCommand(List<String> args) {
     String helpText = """usage: git &lt;command&gt; [&lt;args&gt;]<br><br>
       this app implements a subset of all git commands, as listed:
@@ -515,6 +553,9 @@ class GitWrapper {
         </tr>
         <tr>
           <td>branch</td><td>list, create, or delete branches</td>
+        </tr>
+        <tr>
+          <td>status</td><td>displays current branch and working data</td>
         </tr>
         <tr><td>help</td><td>display help contents</td></tr>
         <tr>
