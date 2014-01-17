@@ -400,7 +400,6 @@ class GitWrapper {
    * git branch [<branch-name>]
    */
   Future branchCommand(List<String> args) {
-    // TODO(camfitz): Add option for no args (print branches)
     if (!args.isEmpty && args[0] == "help") {
       String helpText = "usage: git branch &lt;branch-name&gt;";
       _gitnuOutput.printHtml(helpText);
@@ -416,8 +415,19 @@ class GitWrapper {
       GitOptions options = buildOptions();
 
       if (args.isEmpty) {
-        _gitnuOutput.printLine("error: no branch name passed to git branch.");
-        return new Future.value();
+        return store.getCurrentBranch().then((String currentBranch) {
+          return store.getAllHeads().then((List<String> branches) {
+            branches.sort();
+            for (String branch in branches) {
+              if (currentBranch == branch)
+                _gitnuOutput.printHtml(
+                    '*&nbsp;<span class="green">$branch</span><br>');
+              else
+                _gitnuOutput.printHtml('&nbsp;&nbsp;$branch<br>');
+            }
+            return new Future.value();
+          });
+        });
       }
 
       options.store = store;

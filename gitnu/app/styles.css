@@ -62,3 +62,7 @@ pre {
 .line pre {
   color: #555555;
 }
+
+.green {
+  color: green;
+}
