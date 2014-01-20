@@ -5,6 +5,7 @@ import 'dart:html';
 
 import 'lib/spark/spark/ide/app/lib/git/options.dart';
 import 'lib/spark/spark/ide/app/lib/git/git.dart';
+import 'lib/spark/spark/ide/app/lib/git/object.dart';
 import 'lib/spark/spark/ide/app/lib/git/objectstore.dart';
 
 import 'lib/spark/spark/ide/app/lib/git/commands/branch.dart';
@@ -17,6 +18,7 @@ import 'lib/spark/spark/ide/app/lib/git/commands/push.dart';
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 import 'gitnuoutput.dart';
 import 'gitnufilesystem.dart';
+import 'statictoolkit.dart';
 import 'stringutils.dart';
 
 class GitWrapper {
@@ -62,6 +64,7 @@ class GitWrapper {
         "clone": cloneCommand,
         "commit": commitCommand,
         "help": helpCommand,
+        "log": logCommand,
         "merge": mergeCommand,
         "options": setCommand,
         "pull": pullCommand,
@@ -547,6 +550,68 @@ class GitWrapper {
     });
   }
 
+  /**
+   * Allowable format:
+   * git log [<branch-name>]
+   */
+  Future logCommand(List<String> args) {
+    if (!args.isEmpty && args[0] == "help") {
+      String helpText = "usage: git log [&lt;branch-name&gt;]";
+      _gitnuOutput.printHtml(helpText);
+      return new Future.value();
+    }
+
+    Future printCommits(String headSha, ObjectStore store) {
+      List<String> headShas = [headSha];
+      // TODO(camfitz): Implement paging awaiting git library support.
+      // Implement default "all", optional switch for num.
+      return store.getCommitGraph(headShas, 10).then((CommitGraph graph) {
+        for (CommitObject commit in graph.commits) {
+          // TODO(camfitz): Replace split and toString, build output using
+          // object getters. Blocking - implementation of CommitObject getters.
+          List<String> commitLines = commit.toString().split("\n");
+          bool firstEmptyLine = true;
+          StringBuffer output = new StringBuffer();
+          for (String commitLine in commitLines) {
+            if (commitLine.length > "commit".length &&
+                commitLine.substring(0, "commit".length) == "commit") {
+              output.write('<span class="gold">$commitLine</span><br>');
+            } else if (commitLine.isEmpty) {
+              if (firstEmptyLine)
+                output.write('<br /><div class="indent-14">');
+              firstEmptyLine = false;
+            } else {
+              output.write('${StaticToolkit.htmlEscape(commitLine)}<br>');
+            }
+          }
+          if (!firstEmptyLine)
+            output.write('</div><br />');
+          _gitnuOutput.printHtml(output.toString());
+        }
+        return new Future.value();
+      });
+    }
+
+    return _getRepo().then((ObjectStore store) {
+      if (store == null) {
+        _gitnuOutput.printLine("git: not a git repository.");
+        return new Future.value();
+      }
+      if (args.isEmpty) {
+        return store.getHeadSha().then(
+            (String headSha) => printCommits(headSha, store));
+      }
+      return store.getAllHeads().then((List<String> branches) {
+        if (!branches.contains(args[0])) {
+          _gitnuOutput.printLine("log error: ${args[0]} is not a branch.");
+          return new Future.value();
+        }
+        return store.getHeadForRef('refs/heads/${args[0]}').then(
+            (String headSha) => printCommits(headSha, store));
+      });
+    });
+  }
+
   Future helpCommand(List<String> args) {
     String helpText = """usage: git &lt;command&gt; [&lt;args&gt;]<br><br>
       this app implements a subset of all git commands, as listed:
@@ -563,6 +628,9 @@ class GitWrapper {
         </tr>
         <tr>
           <td>branch</td><td>list, create, or delete branches</td>
+        </tr>
+        <tr>
+          <td>log</td><td>displays recent commits on the current branch</td>
         </tr>
         <tr>
           <td>status</td><td>displays current branch and working data</td>

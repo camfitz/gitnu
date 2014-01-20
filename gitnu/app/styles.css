@@ -66,3 +66,12 @@ pre {
 .green {
   color: green;
 }
+
+.gold {
+  color: #E9AB17;
+}
+
+.indent-14 {
+  padding-left: 14px;
+  display: block;
+}
