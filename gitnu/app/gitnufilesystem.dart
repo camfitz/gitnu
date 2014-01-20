@@ -1,10 +1,12 @@
 library GitnuFileSystem;
 
-import 'dart:html';
 import 'dart:async';
+import 'dart:html';
+import 'dart:js';
+
+import 'gitnuoutput.dart';
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 import 'statictoolkit.dart';
-import 'gitnuoutput.dart';
 
 /**
  * A state based class providing terminal-like file system operations.
@@ -101,16 +103,30 @@ class GitnuFileSystem {
     _output.printLine(getCurrentDirectoryString());
   }
 
-  void invalidOpForEntryType(FileError error, String cmd, String dest) {
-    switch (error.code) {
-      case FileError.NOT_FOUND_ERR:
-        _output.printLine('${cmd}: ${dest}: No such file or directory');
+  /**
+   * The file system API documentation (FileError deprecation doc:
+   * https://developer.mozilla.org/en-US/docs/Web/API/FileError) says that
+   * DomErrors will be thrown, but in fact JsObjects are. This function
+   * retrieves the name of an error for either case.
+   */
+  String getErrorName(error) {
+    if (error is JsObject)
+      return error['name'];
+    else
+      return error.name;
+  }
+
+  void printFileError(error, String cmd, String path) {
+    String name = getErrorName(error);
+    switch (name) {
+      case DomException.NOT_FOUND:
+        _output.printLine('${cmd}: ${path}: No such file or directory');
         break;
-      case FileError.INVALID_STATE_ERR:
-        _output.printLine('${cmd}: ${dest}: Not a directory');
+      case DomException.INVALID_STATE:
+        _output.printLine('${cmd}: ${path}: Not a directory');
         break;
-      case FileError.INVALID_MODIFICATION_ERR:
-        _output.printLine('${cmd}: ${dest}: File already exists');
+      case DomException.INVALID_MODIFICATION:
+        _output.printLine('${cmd}: ${path}: File already exists');
         break;
       default:
         printError(error);
@@ -130,31 +146,7 @@ class GitnuFileSystem {
   }
 
   void printError(error) {
-    var msg = '';
-    switch (error.code) {
-      case FileError.QUOTA_EXCEEDED_ERR:
-        msg = 'QUOTA_EXCEEDED_ERR';
-        break;
-      case FileError.NOT_FOUND_ERR:
-        msg = 'NOT_FOUND_ERR';
-        break;
-      case FileError.SECURITY_ERR:
-        msg = 'SECURITY_ERR';
-        break;
-      case FileError.INVALID_MODIFICATION_ERR:
-        msg = 'INVALID_MODIFICATION_ERR';
-        break;
-      case FileError.INVALID_STATE_ERR:
-        msg = 'INVALID_STATE_ERR';
-        break;
-      case FileError.TYPE_MISMATCH_ERR:
-        msg = 'TYPE_MISMATCH_ERR';
-        break;
-      default:
-        msg = 'FileError = ${error.code}: Unknown error.';
-        break;
-    };
-    _output.printLine('Error: ${msg}');
+    _output.printLine('Error: ${getErrorName(error)}');
   }
 
   Future catCommand(List<String> args) {
@@ -173,11 +165,11 @@ class GitnuFileSystem {
                                 <td class="file"><pre>$result</pre></td>
                               </tr></table>''');
       }, onError: (error) {
-        window.console.debug("error received: $error");
-        if (error.code == FileError.INVALID_STATE_ERR) {
+        String name = getErrorName(error);
+        if (name == DomException.INVALID_STATE) {
           _output.printLine('cat: $fileName: is a directory');
-        } else if (error.code == FileError.NOT_FOUND_ERR) {
-          invalidOpForEntryType(error.code, 'cat', fileName);
+        } else if (name == DomException.NOT_FOUND) {
+          _output.printLine('cat: $fileName: no such file');
         } else {
           printError(error);
         }
@@ -199,7 +191,7 @@ class GitnuFileSystem {
         printDirectory();
         return new Future.value();
       }, onError: (FileError error) {
-        invalidOpForEntryType(error, "cd", dest);
+        printFileError(error, "cd", dest);
         return new Future.value();
       });
   }
@@ -274,7 +266,7 @@ class GitnuFileSystem {
       } else {
         return _cwd.createDirectory(dirName, exclusive: true).then(
             (_) => new Future.value(), onError: (FileError error) {
-            invalidOpForEntryType(error, "mkdir", dirName);
+            printFileError(error, "mkdir", dirName);
             return new Future.value();
         });
       }
@@ -306,12 +298,13 @@ class GitnuFileSystem {
     _cwd.getFile(path).then((FileEntry fileEntry) {
       successCallback(path, fileEntry.toUrl());
     }, onError: (error) {
-          if (error.code == FileError.NOT_FOUND_ERR) {
-            _output.printLine('${cmd}: ${path}: No such file or directory');
-          } else {
-            printError(error);
-          }
-        });
+      String name = getErrorName(error);
+      if (name == DomException.NOT_FOUND) {
+        _output.printLine('${cmd}: ${path}: No such file or directory');
+      } else {
+        printError(error);
+      }
+    });
   }
 
   Future rmCommand(List<String> args) {
@@ -326,13 +319,14 @@ class GitnuFileSystem {
             fileEntry.remove().then((_) {}, onError: printError);
           },
           onError: (error) {
-            if (recursive && error.code == FileError.TYPE_MISMATCH_ERR) {
+            String name = getErrorName(error);
+            if (recursive && name == DomException.TYPE_MISMATCH) {
               _cwd.getDirectory(fileName)
               .then((DirectoryEntry dirEntry) =>
                   dirEntry.removeRecursively().then(
                     (_) {}, onError: printError),
                     onError: printError);
-            } else if (error.code == FileError.INVALID_STATE_ERR) {
+            } else if (name == DomException.INVALID_STATE) {
               _output.printLine('rm: ${fileName}: is a directory');
             } else {
               printError(error);
@@ -347,14 +341,15 @@ class GitnuFileSystem {
     args.forEach((dirName) {
       _cwd.getDirectory(dirName).then((dirEntry) {
             dirEntry.remove().then((_) {}, onError: (error) {
-              if (error.code == FileError.INVALID_MODIFICATION_ERR) {
+              String name = getErrorName(error);
+              if (name == DomException.INVALID_MODIFICATION) {
                 _output.printLine('rmdir: ${dirName}: Directory not empty');
               } else {
                 printError(error);
               }
             });
           },
-          onError: (error) => invalidOpForEntryType(error, "rmdir", dirName));
+          onError: (error) => printFileError(error, "rmdir", dirName));
     });
 
     return new Future.value();
