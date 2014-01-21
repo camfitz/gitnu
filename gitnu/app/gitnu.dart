@@ -1,4 +1,5 @@
 import 'dart:html';
+import 'dart:async';
 import 'gitnufilesystem.dart';
 import 'gitnuoutput.dart';
 import 'gitnuterminal.dart';
@@ -70,4 +71,17 @@ class Gitnu {
     InputElement filePath = querySelector(kFilePathDiv);
     filePath.value = root.fullPath;
   }
+}
+
+/**
+ * A command that is executable from the shell.
+ */
+abstract class ShellCommand {
+  /**
+   * |args| represents command line arguments and switches parsed from input.
+   * args[0] will be the first argument after the identifier that lead to
+   * this particular ShellCommand being instantiated.
+   * i.e. for "git commit ..." args will be |...| in CommitCommand.
+   */
+  Future run(List<String> args);
 }

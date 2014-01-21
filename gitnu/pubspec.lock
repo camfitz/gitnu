@@ -5,6 +5,10 @@ packages:
     description: archive
     source: hosted
     version: "1.0.6"
+  args:
+    description: args
+    source: hosted
+    version: "0.10.0+1"
   browser:
     description: browser
     source: hosted
@@ -17,6 +21,10 @@ packages:
     description: chrome_gen
     source: hosted
     version: "0.3.1"
+  collection:
+    description: collection
+    source: hosted
+    version: "0.9.1"
   crc32:
     description: crc32
     source: hosted

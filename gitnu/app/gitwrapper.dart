@@ -16,6 +16,7 @@ import 'lib/spark/spark/ide/app/lib/git/commands/pull.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/push.dart';
 
 import 'package:chrome_gen/chrome_app.dart' as chrome;
+import 'gitcommands/gitcommand.dart';
 import 'gitnuoutput.dart';
 import 'gitnufilesystem.dart';
 import 'statictoolkit.dart';
@@ -26,13 +27,17 @@ class GitWrapper {
   GitOptions _defaultOptions;
 
   // Output class provided to print to the screen.
-  GitnuOutput _gitnuOutput;
+  GitnuOutput _output;
 
-  // Store the FileSystem class so we now current folder location.
+  // Store the FileSystem class so we know current folder location.
   GitnuFileSystem _fileSystem;
 
+  // Map from names of git subcommands to factories.
+  Map<String, Function> _commandFactories;
+
   // Map of Git specific command strings to functions.
-  Map<String, Function> _cmds;
+  // TODO(camfitz): Remove when commands are swapped over to class format.
+  Map<String, Function> _commands;
 
   // Holds the Git API object.
   Git git;
@@ -41,15 +46,15 @@ class GitWrapper {
   final String kNameStore = "gitName";
   final String kEmailStore = "gitEmail";
 
-  GitWrapper(this._gitnuOutput, this._fileSystem) {
+  GitWrapper(this._output, this._fileSystem) {
     _defaultOptions = new GitOptions();
 
     // Attempt to restore username and email options
     chrome.storage.local.get([kNameStore, kEmailStore]).then((items) {
       if (items[kNameStore] != null || items[kEmailStore] != null) {
-        _gitnuOutput.printHtml("""restored options:<br>
-                                  name- ${items[kNameStore]}<br>
-                                  email- ${items[kEmailStore]}<br>""");
+        _output.printHtml("""restored options:<br>
+                             name- ${items[kNameStore]}<br>
+                             email- ${items[kEmailStore]}<br>""");
       }
       _defaultOptions.name = items[kNameStore];
       _defaultOptions.email = items[kEmailStore];
@@ -57,7 +62,8 @@ class GitWrapper {
 
     _defaultOptions.progressCallback = progressCallback;
 
-    _cmds = {
+    // TODO(camfitz): Remove when commands are swapped over to class format.
+    _commands = {
         "add": addCommand,
         "branch": branchCommand,
         "checkout": checkoutCommand,
@@ -72,6 +78,10 @@ class GitWrapper {
         "status": statusCommand
     };
 
+    _commandFactories = {
+        "clone": () => new CloneCommand(_output, _fileSystem, buildOptions())
+    };
+
     git = new Git();
   }
 
@@ -83,10 +93,12 @@ class GitWrapper {
   Future gitDispatcher(List<String> args) {
     if (!args.isEmpty) {
       String gitOption = args.removeAt(0);
-      if (_cmds[gitOption] is Function) {
-        return _cmds[gitOption](args);
+      if (_commandFactories[gitOption] != null) {
+        return _commandFactories[gitOption]().run(args);
+      } else if (_commands[gitOption] != null) {
+        return _commands[gitOption](args);
       } else  {
-        _gitnuOutput.printLine("git: '$gitOption' is not a git command.");
+        _output.printLine("git: '$gitOption' is not a git command.");
         return new Future.value();
       }
     } else {
@@ -130,14 +142,14 @@ class GitWrapper {
    * longer required to be included when committing.
    */
   void setCommand(List<String> args) {
-    if (args.isEmpty || args[0] == "help") {
+    if (args.isEmpty || args[0] == "--help") {
       String helpText = "usage: git clone &lt;name&gt; &lt;email&gt;";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return;
     }
 
     if (args.length != 2) {
-      _gitnuOutput.printLine("error: wrong number of arguments.");
+      _output.printLine("error: wrong number of arguments.");
       return;
     }
 
@@ -145,9 +157,9 @@ class GitWrapper {
     _defaultOptions.email = args[1];
 
     chrome.storage.local.set({kNameStore: args[0], kEmailStore: args[1]}).then(
-      (_) => _gitnuOutput.printHtml("""retained options:<br>
-                                       name- ${args[0]}<br>
-                                       email- ${args[1]}<br>"""));
+      (_) => _output.printHtml("""retained options:<br>
+                                  name- ${args[0]}<br>
+                                  email- ${args[1]}<br>"""));
   }
 
   /**
@@ -158,20 +170,20 @@ class GitWrapper {
    * --branch <String>
    */
   Future cloneCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "--help") {
       String helpText = """usage: git clone [options] [--] &lt;repo&gt;
         <table class="help-list">
           <tr><td>--depth &lt;int&gt;</td><td>depth to clone to</td></tr>
           <tr><td>--branch &lt;string&gt;</td><td>branch to clone</td></tr>
         </table>""";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return new Future.value();
     }
 
     GitOptions options = buildOptions();
 
     if (args.isEmpty) {
-      _gitnuOutput.printLine("error: no arguments passed to git clone.");
+      _output.printLine("error: no arguments passed to git clone.");
       return new Future.value();
     }
 
@@ -180,12 +192,12 @@ class GitWrapper {
       options.branchName =
           StringUtils.stringSwitch(args, "branch", options.branchName);
     } catch (e) {
-      _gitnuOutput.printLine("error: ${e.message}");
+      _output.printLine("error: ${e.message}");
       return new Future.value();
     }
 
     if (args.length != 1) {
-      _gitnuOutput.printLine("error: no repo url passed to git clone.");
+      _output.printLine("error: no repo url passed to git clone.");
       return new Future.value();
     }
 
@@ -198,12 +210,12 @@ class GitWrapper {
        * TODO(camfitz): Replace console debug with progress callback on screen,
        * awaiting callback implementation in Git library.
        */
-      _gitnuOutput.printLine("cloning repo...");
+      _output.printLine("cloning repo...");
       return clone.clone().then((_) {
-        _gitnuOutput.printLine("finished cloning repo.");
+        _output.printLine("finished cloning repo.");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("clone error: $e");
+        _output.printLine("clone error: $e");
         return new Future.value();
       });
     });
@@ -220,7 +232,7 @@ class GitWrapper {
    * --name <string>
    */
   Future commitCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "--help") {
       String helpText = """usage: git commit [options] [--]
         <table class="help-list">
           <tr>
@@ -236,13 +248,13 @@ class GitWrapper {
             <td>name to identify committer</td>
           </tr>
         </table>""";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return new Future.value();
     }
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: not a git repository.");
+        _output.printLine("git: not a git repository.");
         return new Future.value();
       }
 
@@ -261,17 +273,17 @@ class GitWrapper {
         if (options.name == null)
           throw new Exception("no name provided");
       } catch (e) {
-        _gitnuOutput.printLine("error: ${e.message}");
+        _output.printLine("error: ${e.message}");
         return new Future.value();
       }
 
-      _gitnuOutput.printLine("committing.");
+      _output.printLine("committing.");
       return Commit.commit(options).then((value) {
         // TODO(camfitz): Do something with the result.
-        _gitnuOutput.printLine("commit success: $value");
+        _output.printLine("commit success: $value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("commit error: $e");
+        _output.printLine("commit error: $e");
         return new Future.value();
       });
     });
@@ -279,7 +291,7 @@ class GitWrapper {
 
   Future addCommand(List<String> args) {
     // TODO(camfitz): Implement.
-    _gitnuOutput.printLine("git: add not yet implemented.");
+    _output.printLine("git: add not yet implemented.");
     return new Future.value();
   }
 
@@ -292,7 +304,7 @@ class GitWrapper {
    * --url <string> [repo url]
    */
   Future pushCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "--help") {
       String helpText = """usage: git push [options] [--]
         <table class="help-list">
           <tr>
@@ -304,13 +316,13 @@ class GitWrapper {
             <td>username to authenticate push</td>
           </tr>
         </table>""";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return new Future.value();
     }
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: not a git repository.");
+        _output.printLine("git: not a git repository.");
         return new Future.value();
       }
 
@@ -326,7 +338,7 @@ class GitWrapper {
         options.repoUrl =
             StringUtils.stringSwitch(args, "url", options.repoUrl);
       } catch (e) {
-        _gitnuOutput.printLine("Error: ${e.message}");
+        _output.printLine("Error: ${e.message}");
         return new Future.value();
       }
 
@@ -336,7 +348,7 @@ class GitWrapper {
         window.console.debug("$value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("push error: $e");
+        _output.printLine("push error: $e");
         return new Future.value();
       });
     });
@@ -350,7 +362,7 @@ class GitWrapper {
    * -l <string> [username]
    */
   Future pullCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "--help") {
       String helpText = """usage: git pull [options]
         <table class="help-list">
           <tr>
@@ -362,13 +374,13 @@ class GitWrapper {
             <td>username to authenticate pull</td>
           </tr>
         </table>""";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return new Future.value();
     }
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: not a git repository.");
+        _output.printLine("git: not a git repository.");
         return new Future.value();
       }
 
@@ -382,7 +394,7 @@ class GitWrapper {
         options.username =
             StringUtils.stringSwitch(args, "l", options.username);
       } catch (e) {
-        _gitnuOutput.printLine("error: ${e.message}");
+        _output.printLine("error: ${e.message}");
         return new Future.value();
       }
 
@@ -392,7 +404,7 @@ class GitWrapper {
         window.console.debug("$value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("push error: $e");
+        _output.printLine("push error: $e");
         return new Future.value();
       });
     });
@@ -403,15 +415,15 @@ class GitWrapper {
    * git branch [<branch-name>]
    */
   Future branchCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "--help") {
       String helpText = "usage: git branch &lt;branch-name&gt;";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return new Future.value();
     }
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: Not a git repository.");
+        _output.printLine("git: Not a git repository.");
         return new Future.value();
       }
 
@@ -423,10 +435,10 @@ class GitWrapper {
             branches.sort();
             for (String branch in branches) {
               if (currentBranch == branch)
-                _gitnuOutput.printHtml(
+                _output.printHtml(
                     '*&nbsp;<span class="green">$branch</span><br>');
               else
-                _gitnuOutput.printHtml('&nbsp;&nbsp;$branch<br>');
+                _output.printHtml('&nbsp;&nbsp;$branch<br>');
             }
             return new Future.value();
           });
@@ -442,7 +454,7 @@ class GitWrapper {
         window.console.debug("$value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("branch error: $e");
+        _output.printLine("branch error: $e");
         return new Future.value();
       });
     });
@@ -454,7 +466,7 @@ class GitWrapper {
    */
   Future mergeCommand(List<String> args) {
     // TODO(camfitz): Implement.
-    _gitnuOutput.printLine("git: merge not yet implemented.");
+    _output.printLine("git: merge not yet implemented.");
     return new Future.value();
   }
 
@@ -465,22 +477,22 @@ class GitWrapper {
    * -b <branch-name> [create this branch]
    */
   Future checkoutCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "--help") {
       String helpText = "usage: git checkout [options] &lt;branch-name&gt;";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return new Future.value();
     }
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: not a git repository.");
+        _output.printLine("git: not a git repository.");
         return new Future.value();
       }
 
       GitOptions options = buildOptions();
 
       if (args.isEmpty) {
-        _gitnuOutput.printLine("no branch name passed to git checkout.");
+        _output.printLine("no branch name passed to git checkout.");
         return new Future.value();
       }
 
@@ -494,7 +506,7 @@ class GitWrapper {
           });
         }
       } catch (e) {
-        _gitnuOutput.printLine("error: ${e.message}");
+        _output.printLine("error: ${e.message}");
         return new Future.value();
       }
 
@@ -504,10 +516,10 @@ class GitWrapper {
 
       return Checkout.checkout(options).then((value) {
         // TODO(camfitz): Do something with the result.
-        _gitnuOutput.printLine("checkout success: $value");
+        _output.printLine("checkout success: $value");
         return new Future.value();
       }, onError: (e) {
-        _gitnuOutput.printLine("checkout error: $e");
+        _output.printLine("checkout error: $e");
         return new Future.value();
       });
     });
@@ -520,27 +532,27 @@ class GitWrapper {
   Future statusCommand(List<String> args) {
     if (!args.isEmpty && args[0] == "--help") {
       String helpText = "usage: git status [--help]";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return new Future.value();
     }
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: not a git repository.");
+        _output.printLine("git: not a git repository.");
         return new Future.value();
       }
       return store.getCurrentBranch().then((String currentBranch) {
-        _gitnuOutput.printLine("On branch $currentBranch");
+        _output.printLine("On branch $currentBranch");
         return store.getHeadRef().then((String headRefName) {
           return store.getHeadForRef(headRefName).then((String parent) {
             return Commit.walkFiles(_fileSystem.getCurrentDirectory(),
                                     store).then((String sha) {
               return Commit.checkTreeChanged(store, parent, sha).then((_) {
                 // TODO(camfitz): Expand this message to show changed files.
-                _gitnuOutput.printLine("repo has changes to commit");
+                _output.printLine("repo has changes to commit");
               }, onError: (e) {
                 if (e == "commits_no_changes")
-                  _gitnuOutput.printLine(
+                  _output.printLine(
                       "nothing to commit, working directory clean");
               });
             });
@@ -555,9 +567,9 @@ class GitWrapper {
    * git log [<branch-name>]
    */
   Future logCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "help") {
+    if (!args.isEmpty && args[0] == "--help") {
       String helpText = "usage: git log [&lt;branch-name&gt;]";
-      _gitnuOutput.printHtml(helpText);
+      _output.printHtml(helpText);
       return new Future.value();
     }
 
@@ -586,7 +598,7 @@ class GitWrapper {
           }
           if (!firstEmptyLine)
             output.write('</div><br />');
-          _gitnuOutput.printHtml(output.toString());
+          _output.printHtml(output.toString());
         }
         return new Future.value();
       });
@@ -594,7 +606,7 @@ class GitWrapper {
 
     return _getRepo().then((ObjectStore store) {
       if (store == null) {
-        _gitnuOutput.printLine("git: not a git repository.");
+        _output.printLine("git: not a git repository.");
         return new Future.value();
       }
       if (args.isEmpty) {
@@ -603,7 +615,7 @@ class GitWrapper {
       }
       return store.getAllHeads().then((List<String> branches) {
         if (!branches.contains(args[0])) {
-          _gitnuOutput.printLine("log error: ${args[0]} is not a branch.");
+          _output.printLine("log error: ${args[0]} is not a branch.");
           return new Future.value();
         }
         return store.getHeadForRef('refs/heads/${args[0]}').then(
@@ -641,7 +653,7 @@ class GitWrapper {
           <td>retains name and email options in local storage</td>
         <tr><td>add</td><td>[TBA] add file contents to the index</td></tr>
       </table>""";
-    _gitnuOutput.printHtml(helpText);
+    _output.printHtml(helpText);
     return new Future.value();
   }
 
