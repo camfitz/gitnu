@@ -82,6 +82,8 @@ abstract class ShellCommand {
    * args[0] will be the first argument after the identifier that lead to
    * this particular ShellCommand being instantiated.
    * i.e. for "git commit ..." args will be |...| in CommitCommand.
+   * A command can throw an exception to be caught by the terminal and output
+   * handled accordingly.
    */
   Future run(List<String> args);
 }

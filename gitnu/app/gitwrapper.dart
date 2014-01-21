@@ -4,13 +4,11 @@ import 'dart:async';
 import 'dart:html';
 
 import 'lib/spark/spark/ide/app/lib/git/options.dart';
-import 'lib/spark/spark/ide/app/lib/git/git.dart';
 import 'lib/spark/spark/ide/app/lib/git/object.dart';
 import 'lib/spark/spark/ide/app/lib/git/objectstore.dart';
 
 import 'lib/spark/spark/ide/app/lib/git/commands/branch.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/checkout.dart';
-import 'lib/spark/spark/ide/app/lib/git/commands/clone.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/commit.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/pull.dart';
 import 'lib/spark/spark/ide/app/lib/git/commands/push.dart';
@@ -39,9 +37,6 @@ class GitWrapper {
   // TODO(camfitz): Remove when commands are swapped over to class format.
   Map<String, Function> _commands;
 
-  // Holds the Git API object.
-  Git git;
-
   // Local storage key names for reusable Git options.
   final String kNameStore = "gitName";
   final String kEmailStore = "gitEmail";
@@ -67,8 +62,6 @@ class GitWrapper {
         "add": addCommand,
         "branch": branchCommand,
         "checkout": checkoutCommand,
-        "clone": cloneCommand,
-        "commit": commitCommand,
         "help": helpCommand,
         "log": logCommand,
         "merge": mergeCommand,
@@ -79,10 +72,9 @@ class GitWrapper {
     };
 
     _commandFactories = {
-        "clone": () => new CloneCommand(_output, _fileSystem, buildOptions())
+        "clone": () => new CloneCommand(_output, _fileSystem, buildOptions()),
+        "commit": () => new CommitCommand(_output, _fileSystem, buildOptions())
     };
-
-    git = new Git();
   }
 
   /**
@@ -108,19 +100,15 @@ class GitWrapper {
 
   /**
    * Loads the ObjectStore associated with a Git repo for the current
-   * directory. Completes null if the directory was not a Git directory.
+   * directory. Throws Exception if the directory was not a Git directory.
    * Returns a future ObjectStore.
    */
   Future<ObjectStore> _getRepo() {
-    var completer = new Completer.sync();
-
     ObjectStore store = new ObjectStore(_fileSystem.getCurrentDirectory());
-    _fileSystem.getCurrentDirectory().getDirectory(".git").then(
+    return _fileSystem.getCurrentDirectory().getDirectory(".git").then(
       (DirectoryEntry gitDir) {
-        store.load().then((_) => completer.complete(store));
-      }, onError: (e) => completer.complete(null));
-
-    return completer.future;
+        return store.load().then((_) => store);
+      }, onError: (_) => throw new Exception("not a git repository."));
   }
 
   /**
@@ -141,158 +129,29 @@ class GitWrapper {
    * Sets the name and email in local storage so the options are no
    * longer required to be included when committing.
    */
-  void setCommand(List<String> args) {
+  Future setCommand(List<String> args) {
     if (args.isEmpty || args[0] == "--help") {
       String helpText = "usage: git clone &lt;name&gt; &lt;email&gt;";
       _output.printHtml(helpText);
-      return;
+      return new Future.value();
     }
 
-    if (args.length != 2) {
-      _output.printLine("error: wrong number of arguments.");
-      return;
-    }
+    if (args.length != 2)
+      throw new Exception("wrong number of arguments.");
 
     _defaultOptions.name = args[0];
     _defaultOptions.email = args[1];
 
-    chrome.storage.local.set({kNameStore: args[0], kEmailStore: args[1]}).then(
+    return chrome.storage.local.set(
+        {kNameStore: args[0], kEmailStore: args[1]}).then(
       (_) => _output.printHtml("""retained options:<br>
                                   name- ${args[0]}<br>
                                   email- ${args[1]}<br>"""));
   }
 
-  /**
-   * Allowable format:
-   * git clone [options] [--] <repo>
-   * Valid options:
-   * --depth <int>
-   * --branch <String>
-   */
-  Future cloneCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "--help") {
-      String helpText = """usage: git clone [options] [--] &lt;repo&gt;
-        <table class="help-list">
-          <tr><td>--depth &lt;int&gt;</td><td>depth to clone to</td></tr>
-          <tr><td>--branch &lt;string&gt;</td><td>branch to clone</td></tr>
-        </table>""";
-      _output.printHtml(helpText);
-      return new Future.value();
-    }
-
-    GitOptions options = buildOptions();
-
-    if (args.isEmpty) {
-      _output.printLine("error: no arguments passed to git clone.");
-      return new Future.value();
-    }
-
-    try {
-      options.depth = StringUtils.intSwitch(args, "depth", options.depth);
-      options.branchName =
-          StringUtils.stringSwitch(args, "branch", options.branchName);
-    } catch (e) {
-      _output.printLine("error: ${e.message}");
-      return new Future.value();
-    }
-
-    if (args.length != 1) {
-      _output.printLine("error: no repo url passed to git clone.");
-      return new Future.value();
-    }
-
-    options.root = _fileSystem.getCurrentDirectory();
-    options.repoUrl = args[0];
-    options.store = new ObjectStore(_fileSystem.getCurrentDirectory());
-    Clone clone = new Clone(options);
-    return options.store.init().then((_) {
-      /**
-       * TODO(camfitz): Replace console debug with progress callback on screen,
-       * awaiting callback implementation in Git library.
-       */
-      _output.printLine("cloning repo...");
-      return clone.clone().then((_) {
-        _output.printLine("finished cloning repo.");
-        return new Future.value();
-      }, onError: (e) {
-        _output.printLine("clone error: $e");
-        return new Future.value();
-      });
-    });
-  }
-
-  /**
-   * Allowable format:
-   * git commit [options] [--]
-   * Valid options:
-   * -m <string>
-   * -a [assumed option as no staging area at this stage]
-   * Additional options:
-   * --email <string>
-   * --name <string>
-   */
-  Future commitCommand(List<String> args) {
-    if (!args.isEmpty && args[0] == "--help") {
-      String helpText = """usage: git commit [options] [--]
-        <table class="help-list">
-          <tr>
-            <td>-m &lt;string&gt;</td>
-            <td>message to accompany this commit</td>
-          </tr>
-          <tr>
-            <td>--email &lt;string&gt;</td>
-            <td>email to identify committer</td>
-          </tr>
-          <tr>
-            <td>--name &lt;string&gt;</td>
-            <td>name to identify committer</td>
-          </tr>
-        </table>""";
-      _output.printHtml(helpText);
-      return new Future.value();
-    }
-
-    return _getRepo().then((ObjectStore store) {
-      if (store == null) {
-        _output.printLine("git: not a git repository.");
-        return new Future.value();
-      }
-
-      GitOptions options = buildOptions();
-      options.store = store;
-      options.root = _fileSystem.getCurrentDirectory();
-
-      try {
-        options.commitMessage =
-            StringUtils.stringSwitch(args, "m", options.commitMessage);
-        options.email =
-            StringUtils.stringSwitch(args, "email", options.email);
-        if (options.email == null)
-          throw new Exception("no email provided");
-        options.name = StringUtils.stringSwitch(args, "--name", options.name);
-        if (options.name == null)
-          throw new Exception("no name provided");
-      } catch (e) {
-        _output.printLine("error: ${e.message}");
-        return new Future.value();
-      }
-
-      _output.printLine("committing.");
-      return Commit.commit(options).then((value) {
-        // TODO(camfitz): Do something with the result.
-        _output.printLine("commit success: $value");
-        return new Future.value();
-      }, onError: (e) {
-        _output.printLine("commit error: $e");
-        return new Future.value();
-      });
-    });
-  }
-
   Future addCommand(List<String> args) {
     // TODO(camfitz): Implement.
-    _output.printLine("git: add not yet implemented.");
-    return new Future.value();
+    throw new Exception("add not yet implemented.");
   }
 
   /**
@@ -321,26 +180,13 @@ class GitWrapper {
     }
 
     return _getRepo().then((ObjectStore store) {
-      if (store == null) {
-        _output.printLine("git: not a git repository.");
-        return new Future.value();
-      }
-
       GitOptions options = buildOptions();
       options.store = store;
       options.root = _fileSystem.getCurrentDirectory();
 
-      try {
-        options.password =
-            StringUtils.stringSwitch(args, "p", options.password);
-        options.username =
-            StringUtils.stringSwitch(args, "l", options.username);
-        options.repoUrl =
-            StringUtils.stringSwitch(args, "url", options.repoUrl);
-      } catch (e) {
-        _output.printLine("Error: ${e.message}");
-        return new Future.value();
-      }
+      options.password = StringUtils.stringSwitch(args, "p", options.password);
+      options.username = StringUtils.stringSwitch(args, "l", options.username);
+      options.repoUrl = StringUtils.stringSwitch(args, "url", options.repoUrl);
 
       Push push = new Push();
       return push.push(options).then((value) {
@@ -379,24 +225,12 @@ class GitWrapper {
     }
 
     return _getRepo().then((ObjectStore store) {
-      if (store == null) {
-        _output.printLine("git: not a git repository.");
-        return new Future.value();
-      }
-
       GitOptions options = buildOptions();
       options.store = store;
       options.root = _fileSystem.getCurrentDirectory();
 
-      try {
-        options.password =
-            StringUtils.stringSwitch(args, "p", options.password);
-        options.username =
-            StringUtils.stringSwitch(args, "l", options.username);
-      } catch (e) {
-        _output.printLine("error: ${e.message}");
-        return new Future.value();
-      }
+      options.password = StringUtils.stringSwitch(args, "p", options.password);
+      options.username = StringUtils.stringSwitch(args, "l", options.username);
 
       Pull pull = new Pull(options);
       return pull.pull().then((value) {
@@ -422,11 +256,6 @@ class GitWrapper {
     }
 
     return _getRepo().then((ObjectStore store) {
-      if (store == null) {
-        _output.printLine("git: Not a git repository.");
-        return new Future.value();
-      }
-
       GitOptions options = buildOptions();
 
       if (args.isEmpty) {
@@ -440,7 +269,6 @@ class GitWrapper {
               else
                 _output.printHtml('&nbsp;&nbsp;$branch<br>');
             }
-            return new Future.value();
           });
         });
       }
@@ -466,8 +294,7 @@ class GitWrapper {
    */
   Future mergeCommand(List<String> args) {
     // TODO(camfitz): Implement.
-    _output.printLine("git: merge not yet implemented.");
-    return new Future.value();
+    throw new Exception("merge not yet implemented.");
   }
 
   /**
@@ -484,30 +311,18 @@ class GitWrapper {
     }
 
     return _getRepo().then((ObjectStore store) {
-      if (store == null) {
-        _output.printLine("git: not a git repository.");
-        return new Future.value();
-      }
-
       GitOptions options = buildOptions();
 
-      if (args.isEmpty) {
-        _output.printLine("no branch name passed to git checkout.");
-        return new Future.value();
-      }
+      if (args.isEmpty)
+        throw new Exception("no branch name passed to git checkout.");
 
-      try {
-        options.branchName =
-            StringUtils.stringSwitch(args, "b", options.branchName);
-        if (options.branchName.length > 0) {
-          // TODO(camfitz): Fix potential timing problem here.
-          return branchCommand([options.branchName]).then((_) {
-            checkoutCommand([options.branchName]);
-          });
-        }
-      } catch (e) {
-        _output.printLine("error: ${e.message}");
-        return new Future.value();
+      options.branchName =
+          StringUtils.stringSwitch(args, "b", options.branchName);
+      if (options.branchName.length > 0) {
+        // TODO(camfitz): Fix potential timing problem here.
+        return branchCommand([options.branchName]).then((_) {
+          checkoutCommand([options.branchName]);
+        });
       }
 
       options.store = store;
@@ -537,10 +352,6 @@ class GitWrapper {
     }
 
     return _getRepo().then((ObjectStore store) {
-      if (store == null) {
-        _output.printLine("git: not a git repository.");
-        return new Future.value();
-      }
       return store.getCurrentBranch().then((String currentBranch) {
         _output.printLine("On branch $currentBranch");
         return store.getHeadRef().then((String headRefName) {
@@ -600,15 +411,10 @@ class GitWrapper {
             output.write('</div><br />');
           _output.printHtml(output.toString());
         }
-        return new Future.value();
       });
     }
 
     return _getRepo().then((ObjectStore store) {
-      if (store == null) {
-        _output.printLine("git: not a git repository.");
-        return new Future.value();
-      }
       if (args.isEmpty) {
         return store.getHeadSha().then(
             (String headSha) => printCommits(headSha, store));

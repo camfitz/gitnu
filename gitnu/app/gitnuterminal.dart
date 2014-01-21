@@ -146,7 +146,11 @@ class GitnuTerminal {
           _cmds[cmd](cmd, args);
           enablePrompt();
         } else if (_extCmds[cmd] is Function) {
-          _extCmds[cmd](args).then((_) => enablePrompt());
+          new Future.sync(() => _extCmds[cmd](args)).then((_) => enablePrompt(),
+              onError: (e) {
+                writeOutput('$cmd error: $e');
+                enablePrompt();
+              });
         } else if (!cmd.isEmpty) {
           writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
           enablePrompt();
@@ -172,28 +176,25 @@ class GitnuTerminal {
 
     if (event.keyCode == upArrowKey || event.keyCode == downArrowKey) {
       event.preventDefault();
-
-      if (_historyPosition < _history.length) {
+      if (_historyPosition < _history.length)
         _history[_historyPosition] = _input.value;
-      }
     }
 
     if (event.keyCode == upArrowKey) {
       _historyPosition--;
-      if (_historyPosition < 0) {
+      if (_historyPosition < 0)
         _historyPosition = 0;
-      }
     } else if (event.keyCode == downArrowKey) {
       _historyPosition++;
-      if (_historyPosition >= _history.length) {
-        _historyPosition = max(0, _history.length - 1);
-      }
+      if (_historyPosition > _history.length)
+        _historyPosition = max(0, _history.length);
     }
 
     if (event.keyCode == upArrowKey || event.keyCode == downArrowKey) {
-      if (_history.length != 0 && _history[_historyPosition] != null) {
+      if (_historyPosition == _history.length)
+        _input.value = "";
+      else if (_history.length != 0 && _history[_historyPosition] != null)
         _input.value = _history[_historyPosition];
-      }
     }
   }
 

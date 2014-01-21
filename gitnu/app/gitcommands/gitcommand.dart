@@ -9,12 +9,15 @@ import '../lib/spark/spark/ide/app/lib/git/objectstore.dart';
 import '../lib/spark/spark/ide/app/lib/git/options.dart';
 
 import '../lib/spark/spark/ide/app/lib/git/commands/clone.dart';
+import '../lib/spark/spark/ide/app/lib/git/commands/commit.dart';
 
 import '../gitnu.dart';
 import '../gitnufilesystem.dart';
 import '../gitnuoutput.dart';
+import '../statictoolkit.dart';
 
 part 'clonecommand.dart';
+part 'commitcommand.dart';
 
 /**
  * Base class for all Git commands.
@@ -30,18 +33,18 @@ class GitCommandBase {
 
   /**
    * Loads the ObjectStore associated with a Git repo for the current
-   * directory. Completes null if the directory was not a Git directory.
+   * directory. Throws Exception if the directory was not a Git directory.
    * Returns a future ObjectStore.
    */
   Future<ObjectStore> _getRepo() {
-    var completer = new Completer.sync();
-
     ObjectStore store = new ObjectStore(_fileSystem.getCurrentDirectory());
-    _fileSystem.getCurrentDirectory().getDirectory(".git").then(
+    return _fileSystem.getCurrentDirectory().getDirectory(".git").then(
       (DirectoryEntry gitDir) {
-        store.load().then((_) => completer.complete(store));
-      }, onError: (e) => completer.complete(null));
+        return store.load().then((_) => store);
+      }, onError: (_) => throw new Exception("not a git repository."));
+  }
 
-    return completer.future;
+  String html(String input) {
+    return StaticToolkit.htmlEscape(input);
   }
 }

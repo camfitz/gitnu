@@ -1,12 +1,5 @@
 part of git_commands;
 
-/**
- * Allowable format:
- * git clone [options] [--] <repo>
- * Valid options:
- * --depth <int>
- * --branch <String>
- */
 class CloneCommand extends GitCommandBase implements ShellCommand {
   // Stores default GitOptions to be used with this command.
   GitOptions _options;
@@ -16,25 +9,23 @@ class CloneCommand extends GitCommandBase implements ShellCommand {
                this._options)
       : super(output, fileSystem);
 
-  ArgResults parse(List<String> args) {
-    var parser = new ArgParser();
-    parser.addOption('depth');
-    parser.addOption('branch');
+  ArgParser getArgParser() {
+    ArgParser parser = new ArgParser();
+    parser.addOption('depth', help: html('<int> Depth to clone to'));
+    parser.addOption('branch', help: html('<string> Branch to clone'));
     parser.addFlag('help');
-    return parser.parse(args);
+    return parser;
   }
 
   void help() {
-    String helpText = """usage: git clone [options] [--] &lt;repo&gt;
-        <table class="help-list">
-          <tr><td>--depth &lt;int&gt;</td><td>depth to clone to</td></tr>
-          <tr><td>--branch &lt;string&gt;</td><td>branch to clone</td></tr>
-        </table>""";
+    String helpText = """usage: git clone [options] [--] <repo>
+        <pre class="help">${getArgParser().getUsage()}</pre>""";
     _output.printHtml(helpText);
   }
 
+  @override
   Future run(List<String> args) {
-    ArgResults commandLineOptions = parse(args);
+    ArgResults commandLineOptions = getArgParser().parse(args);
 
     if (commandLineOptions['help']) {
       help();
@@ -44,10 +35,8 @@ class CloneCommand extends GitCommandBase implements ShellCommand {
     _options.depth = commandLineOptions['depth'];
     _options.branchName = commandLineOptions['branch'];
 
-    if (commandLineOptions.rest.isEmpty) {
-      _output.printLine("error: no repo url passed to git clone.");
-      return new Future.value();
-    }
+    if (commandLineOptions.rest.isEmpty)
+      throw new Exception("no repo url passed to git clone.");
 
     _options.root = _fileSystem.getCurrentDirectory();
     _options.repoUrl = commandLineOptions.rest[0];
