@@ -7,6 +7,7 @@ import 'lib/spark/spark/ide/app/lib/git/options.dart';
 
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 import 'gitcommands/gitcommand.dart';
+import 'gitnu.dart';
 import 'gitnuoutput.dart';
 import 'gitnufilesystem.dart';
 
@@ -61,23 +62,22 @@ class GitWrapper {
     };
   }
 
+  ShellCommand _lookupCommand(String functionName) {
+    if (_commandFactories[functionName] != null)
+      return _commandFactories[functionName]();
+    throw new Exception('$functionName is not a git command.');
+  }
+
   /**
    * Dispatches a received git command to its appropriate wrapper,
    * assuming the form
    * git args[0] args[1..n] = git command [args]
    */
   Future gitDispatcher(List<String> args) {
-    if (!args.isEmpty) {
-      String gitOption = args.removeAt(0);
-      if (_commandFactories[gitOption] != null) {
-        return _commandFactories[gitOption]().run(args);
-      } else  {
-        _output.printLine("git: '$gitOption' is not a git command.");
-        return new Future.value();
-      }
-    } else {
-      return new HelpCommand(_output).run(args);
-    }
+    String subCommand = "help";
+    if (!args.isEmpty)
+      subCommand = args.removeAt(0);
+    _lookupCommand(subCommand).run(args);
   }
 
   /**
