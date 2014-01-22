@@ -20,9 +20,6 @@ class StringUtilsTest {
 
   static void run() {
     testParseCommandLine();
-    testSwitchFinder();
-    testStringSwitch();
-    testIntSwitch();
   }
 
   /**
@@ -120,82 +117,6 @@ class StringUtilsTest {
 
     test('parseCommandLineEndsWithEscape', () =>
         expect(StringUtils.parseCommandLine("vnfjd\\"), isNull)
-    );
-  }
-
-  static void testSwitchFinder() {
-    test('switchFinderNoSwitch', () =>
-        expect(StringUtils.switchFinder(["", "--cheesee"], "cheese"),
-            equals(""))
-    );
-
-    test('switchFinderEmpty', () =>
-        expect(StringUtils.switchFinder([], "cheese"),
-            equals(""))
-    );
-
-    test('switchFinderNoParamEnd', () =>
-        expect(() => StringUtils.switchFinder(["", "--cheese"], "cheese"),
-            throwsFormatException)
-    );
-
-    test('switchFinderReturnParam', () =>
-        expect(StringUtils.switchFinder(["", "--cheese", "chips"], "cheese"),
-            equals("chips"))
-    );
-  }
-
-  static void testStringSwitch() {
-    test('stringSwitchNoSwitch', () =>
-        expect(StringUtils.stringSwitch(["", "--cheesee"], "cheese", "r"),
-            equals("r"))
-    );
-
-    test('stringSwitchEmpty', () =>
-        expect(StringUtils.stringSwitch([], "cheese", "r"),
-            equals("r"))
-    );
-
-    test('stringSwitchReturnParam', () =>
-        expect(StringUtils.stringSwitch(["", "--chs", "chs"], "chs" , "r"),
-            equals("chs"))
-    );
-
-    test('stringSwitchNoParamEnd', () =>
-        expect(() => StringUtils.stringSwitch(["", "--chse"], "chse", "r"),
-            throwsFormatException)
-    );
-
-    test('stringSwitchNoParam', () =>
-        expect(() => StringUtils.stringSwitch(["", "--ch", "-c"], "ch", "r"),
-            throwsFormatException)
-    );
-  }
-
-  static void testIntSwitch() {
-    test('intSwitchNoSwitch', () =>
-        expect(StringUtils.intSwitch(["", "--cheesee"], "cheese", 7),
-            equals(7))
-    );
-
-    test('intSwitchEmpty', () =>
-        expect(StringUtils.intSwitch([], "cheese", 7),
-            equals(7))
-    );
-
-    test('intSwitchReturnParam', () =>
-        expect(StringUtils.intSwitch(["", "--chs", "5"], "chs" , 7),
-            equals(5))
-    );
-
-    test('intSwitchNoParamEnd', () =>
-        expect(() => StringUtils.intSwitch(["", "--chse"], "chse", 7),
-            throwsFormatException)
-    );
-
-    test('intSwitchNoParam', () =>
-        expect(() => StringUtils.intSwitch(["", "--ch", "-c"], "ch", 7),
-            throwsFormatException)
     );
   }
 }
