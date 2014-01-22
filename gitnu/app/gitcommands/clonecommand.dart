@@ -18,7 +18,7 @@ class CloneCommand extends GitCommandBase implements ShellCommand {
   }
 
   void help() {
-    String helpText = """usage: git clone [options] [--] <repo>
+    String helpText = """usage: git clone [options] [--] ${html('<repo>')}
         <pre class="help">${getArgParser().getUsage()}</pre>""";
     _output.printHtml(helpText);
   }
