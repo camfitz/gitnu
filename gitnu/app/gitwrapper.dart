@@ -77,7 +77,7 @@ class GitWrapper {
     String subCommand = "help";
     if (!args.isEmpty)
       subCommand = args.removeAt(0);
-    _lookupCommand(subCommand).run(args);
+    return _lookupCommand(subCommand).run(args);
   }
 
   /**
