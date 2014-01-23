@@ -6,6 +6,8 @@ class LogCommand extends GitCommandBase implements ShellCommand {
 
   ArgParser getArgParser() {
     ArgParser parser = new ArgParser();
+    parser.addOption('num', abbr: 'n',
+        help: html('<int> Number of log entries to show'));
     parser.addFlag('help');
     return parser;
   }
@@ -25,50 +27,26 @@ class LogCommand extends GitCommandBase implements ShellCommand {
       return new Future.value();
     }
 
-    Future printCommits(String headSha, ObjectStore store) {
-      List<String> headShas = [headSha];
-      // TODO(camfitz): Implement paging awaiting git library support.
-      // Implement default "all", optional switch for num.
-      return store.getCommitGraph(headShas, 10).then((CommitGraph graph) {
-        for (CommitObject commit in graph.commits) {
-          // TODO(camfitz): Replace split and toString, build output using
-          // object getters. Blocking - implementation of CommitObject getters.
-          List<String> commitLines = commit.toString().split("\n");
-          bool firstEmptyLine = true;
-          StringBuffer output = new StringBuffer();
-          for (String commitLine in commitLines) {
-            if (commitLine.length > "commit".length &&
-                commitLine.substring(0, "commit".length) == "commit") {
-              output.write('<span class="gold">$commitLine</span><br>');
-            } else if (commitLine.isEmpty) {
-              if (firstEmptyLine)
-                output.write('<br /><div class="indent-14">');
-              firstEmptyLine = false;
-            } else {
-              output.write('${html(commitLine)}<br>');
-            }
-          }
-          if (!firstEmptyLine)
-            output.write('</div><br />');
-          _output.printHtml(output.toString());
-        }
-      });
-    }
-
     return _getRepo().then((ObjectStore store) {
-      if (commandLineOptions.rest.isEmpty) {
-        return store.getHeadSha().then(
-            (String headSha) => printCommits(headSha, store));
-      }
-      return store.getAllHeads().then((List<String> branches) {
-        if (!branches.contains(commandLineOptions.rest[0])) {
-          _output.printLine(
-              "log error: ${commandLineOptions.rest[0]} is not a branch.");
-          return new Future.value();
+      String branch = null;
+      if (commandLineOptions.rest.length > 0)
+        branch = commandLineOptions.rest[0];
+      // TODO(camfitz): Implement paging awaiting git library support.
+      int num = null;
+      if (commandLineOptions['num'] != null)
+        num = int.parse(commandLineOptions['num']);
+      return Log.log(store, num, branch).then((List<CommitObject> commits) {
+        for (CommitObject commit in commits) {
+          Map<String, String> commitMap = commit.toMap();
+          _output.printHtml(
+              '<span class="gold">commit ${commitMap['commit']}</span><br>');
+          _output.printHtml(
+              '''Author: ${commitMap['author_name']}
+              &lt;${commitMap['author_email']}&gt;<br>''');
+          _output.printHtml('Date: ${commitMap['date'].toString()}<br>');
+          _output.printHtml(
+              '<br><div class="indent-14">${commitMap['message']}</div><br>');
         }
-        return store.getHeadForRef(
-            'refs/heads/${commandLineOptions.rest[0]}').then(
-            (String headSha) => printCommits(headSha, store));
       });
     });
   }
