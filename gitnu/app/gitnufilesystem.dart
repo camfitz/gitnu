@@ -183,17 +183,15 @@ class GitnuFileSystem {
   Future cdCommand(List<String> args) {
     var dest = args.join(' ').trim();
     if (dest.isEmpty) {
-      dest = '/';
+      _cwd = _root;
+      printDirectory();
+      return new Future.value();
     }
 
     return _cwd.getDirectory(dest).then((DirectoryEntry dirEntry) {
-        _cwd = dirEntry;
-        printDirectory();
-        return new Future.value();
-      }, onError: (FileError error) {
-        printFileError(error, "cd", dest);
-        return new Future.value();
-      });
+      _cwd = dirEntry;
+      printDirectory();
+    }, onError: (FileError error) => printFileError(error, "cd", dest));
   }
 
   /**
