@@ -23,76 +23,17 @@ class GitnuFileSystem {
   // operations
   GitnuOutput _output;
 
-  // Local storage key for the root folder.
-  final String kRootFolder = "rootFolder";
-
-  GitnuFileSystem(String displayFilePath, this._output) {
-    // Check if we set a rootFolder in a previous use of the app.
-    chrome.storage.local.get(kRootFolder).then((items) {
-      chrome.fileSystem.isRestorable(items[kRootFolder]).then((value) {
-        if (value) {
-          window.console.debug("Restoring saved root folder.");
-
-          chrome.fileSystem.restoreEntry(items[kRootFolder]).then((root) {
-            setRoot(root);
-
-            // Display filePath
-            InputElement filePath = querySelector(displayFilePath);
-            filePath.value = getRootString();
-          });
-        } else {
-          window.console.debug("No root folder to restore.");
-        }
-      });
-    });
+  GitnuFileSystem(this._output, this._root) {
+    this._cwd = this._root;
   }
 
-  /*
-   * Shows a folder picker prompt, allowing the user to choose a new root /
-   * other folder.
-   * The entry is retained in chrome.storage.local, keyed by |storageName|,
-   * and the callback is called, with the entry as a parameter.
-   */
-  void promptUserForFolderAccess(String storageName, Function callback) {
-    chrome.ChooseEntryOptions options = new chrome.ChooseEntryOptions(
-        type: chrome.ChooseEntryType.OPEN_DIRECTORY);
-    chrome.fileSystem.chooseEntry(options).then(
-        (chrome.ChooseEntryResult result) {
-      DirectoryEntry entry = result.entry;
+  String getCurrentDirectoryString() => _cwd.fullPath;
 
-      // use local storage to retain access to this file
-      chrome.storage.local.set(
-          {storageName: chrome.fileSystem.retainEntry(entry)}).then(
-        (_) => window.console.debug(
-            "Retained chosen folder- ${entry.fullPath} as $storageName"));
+  DirectoryEntry getRoot() => _root;
 
-      callback(entry);
-    });
-  }
+  DirectoryEntry getCurrentDirectory() => _cwd;
 
-  /**
-   * Sets the input directory as the root directory entry.
-   */
-  void setRoot(DirectoryEntry root) {
-    _root = root;
-    _cwd = root;
-  }
-
-  String getCurrentDirectoryString() {
-    return _cwd.fullPath;
-  }
-
-  DirectoryEntry getRoot() {
-    return _root;
-  }
-
-  DirectoryEntry getCurrentDirectory() {
-    return _cwd;
-  }
-
-  String getRootString() {
-    return _root.fullPath;
-  }
+  String getRootString() => _root.fullPath;
 
   Future pwdCommand(List<String> args) {
     printDirectory();

@@ -1,9 +1,12 @@
 import 'dart:html';
 import 'dart:async';
+
+import 'constants.dart';
 import 'gitnufilesystem.dart';
 import 'gitnuoutput.dart';
 import 'gitnuterminal.dart';
 import 'gitwrapper.dart';
+import 'rootpicker.dart';
 
 void main() {
   new Gitnu().run();
@@ -12,30 +15,23 @@ void main() {
 class Gitnu {
   GitnuTerminal _term;
   GitnuFileSystem _fileSystem;
-  GitnuOutput _gitnuOutput;
+  GitnuOutput _output;
   GitWrapper _gitWrapper;
-
-  // Div ID- where to put the root file path.
-  final String kFilePathDiv = "#file_path";
-
-  // Button ID- click to choose root file path.
-  final String kChooseDirButton = "#choose_dir";
 
   Gitnu();
 
   void run() {
-    _term = new GitnuTerminal('#input-line', '#output', '#cmdline',
-                              '#container', '#prompt');
+    _term = new GitnuTerminal();
+    _output = new GitnuOutput(_term.writeOutput);
+    RootPicker rootPicker = new RootPicker(_output, startShell);
+  }
 
-    _gitnuOutput = new GitnuOutput(_term.writeOutput);
-
-    _fileSystem = new GitnuFileSystem(kFilePathDiv, _gitnuOutput);
-    InputElement chooseDirButton = document.querySelector(kChooseDirButton);
-    chooseDirButton.onClick.listen((_) {
-      _fileSystem.promptUserForFolderAccess(_fileSystem.kRootFolder, setRoot);
-    });
-
-    _gitWrapper = new GitWrapper(_gitnuOutput, _fileSystem);
+  void startShell(DirectoryEntry root) {
+    InputElement filePath = querySelector(kFilePathDiv);
+    filePath.value = root.fullPath;
+    _term.clearCommand(null);
+    _fileSystem = new GitnuFileSystem(_output, root);
+    _gitWrapper = new GitWrapper(_output, _fileSystem);
 
     Map<String, Function> commandList;
     /**
@@ -57,19 +53,7 @@ class Gitnu {
     };
 
     _term.initialiseCommands(commandList);
-  }
-
-  /**
-   * Callback for the folder access prompt.
-   * Displays the file path in the designated div, and sets it as root in
-   * GitnuFileSystem.
-   */
-  void setRoot(DirectoryEntry root) {
-    _fileSystem.setRoot(root);
-
-    // Display filePath
-    InputElement filePath = querySelector(kFilePathDiv);
-    filePath.value = root.fullPath;
+    _term.enablePrompt();
   }
 }
 

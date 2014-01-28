@@ -3,14 +3,12 @@ library GitnuTerminal;
 import 'dart:html';
 import 'dart:async';
 import 'dart:math';
+
+import 'constants.dart';
 import 'statictoolkit.dart';
 import 'stringutils.dart';
 
 class GitnuTerminal {
-  String _cmdLineContainer;
-  String _outputContainer;
-  String _cmdLineInput;
-  String _container;
   OutputElement _output;
   InputElement _input;
   DivElement _cmdLine;
@@ -22,19 +20,25 @@ class GitnuTerminal {
   Map<String, Function> _cmds;
   Map<String, Function> _extCmds;
 
-  GitnuTerminal(this._cmdLineContainer, this._outputContainer,
-      this._cmdLineInput, this._container, String prompt) {
-    _cmdLine = document.querySelector(_cmdLineContainer);
-    _output = document.querySelector(_outputContainer);
-    _input = document.querySelector(_cmdLineInput);
-    _containerDiv = document.querySelector(_container);
-    _prompt = document.querySelector(prompt);
+  GitnuTerminal() {
+    _cmdLine = document.querySelector(kInputLine);
+    _output = document.querySelector(kOutputRegion);
+    _input = document.querySelector(kCmdLine);
+    _containerDiv = document.querySelector(kContainer);
+    _prompt = document.querySelector(kPrompt);
 
-    // Always force text cursor to end of input line.
-    window.onClick.listen((event) => _input.focus());
+    // Prompt will need to be enabled by client.
+    disablePrompt();
+
+    // Capture focus if click is near input line.
+    _cmdLine.onClick.listen((event) => _input.focus());
 
     // Trick: Always force text cursor to end of input line.
     _cmdLine.onClick.listen((event) => _input.value = _input.value);
+
+    // Capture focus to input line on any key press that doesn't affect
+    // screen position.
+    window.onKeyDown.listen(focusCommandLine);
 
     // Handle up/down key presses for shell history and enter for new command.
     _cmdLine.onKeyDown.listen(historyHandler);
@@ -44,22 +48,25 @@ class GitnuTerminal {
     _containerDiv.onKeyDown.listen(positionHandler);
 
     // Ensures the terminal covers the correct height
-    int topMargin = 54;
     int bodyHeight = window.innerHeight;
-    _containerDiv.style.maxHeight = "${bodyHeight - topMargin}px";
-    _containerDiv.style.height = "${bodyHeight - topMargin}px";
+    _containerDiv.style.maxHeight = "${bodyHeight - kTopMargin}px";
+    _containerDiv.style.height = "${bodyHeight - kTopMargin}px";
+  }
 
+  /**
+   * Window pull focus to command line, unless inputting a position command.
+   */
+  void focusCommandLine(KeyboardEvent event) {
+    if (event.keyCode == pgDownKey || event.keyCode == pgUpKey ||
+        event.keyCode == endKey || event.keyCode == homeKey)
+      return;
+    _input.focus();
   }
 
   /**
    * Handles scrolling using pgUp, pgDown, end and home keys.
    */
   void positionHandler(KeyboardEvent event) {
-    const int pgDownKey = 34;
-    const int pgUpKey = 33;
-    const int endKey = 35;
-    const int homeKey = 36;
-
     if (event.keyCode == pgDownKey || event.keyCode == pgUpKey ||
         event.keyCode == endKey || event.keyCode == homeKey) {
       event.preventDefault();
@@ -104,9 +111,6 @@ class GitnuTerminal {
    * or commandFromExternalList(cmd, ouputWriter, args) where appropriate.
    */
   void processNewCommand(KeyboardEvent event) {
-    int enterKey = 13;
-    int tabKey = 9;
-
     if (event.keyCode == tabKey) {
       event.preventDefault();
     } else if (event.keyCode == enterKey) {
@@ -119,7 +123,7 @@ class GitnuTerminal {
       DivElement line = _input.parent.parent.clone(true);
       line.attributes.remove('id');
       line.classes.add('line');
-      InputElement cmdInput = line.querySelector(_cmdLineInput);
+      InputElement cmdInput = line.querySelector(kCmdLine);
       cmdInput.attributes.remove('id');
       cmdInput.autofocus = false;
       cmdInput.readOnly = true;
@@ -128,42 +132,32 @@ class GitnuTerminal {
       _input.value = ""; // clear input
       disablePrompt();
 
+      runCommand(cmdline).whenComplete(() {
+        enablePrompt();
+        _cmdLine.scrollIntoView(ScrollAlignment.TOP);
+      });
+    }
+  }
+
+  Future runCommand(String cmdline) {
+    return new Future.value().then((_) {
       List<String> args = StringUtils.parseCommandLine(cmdline);
 
-      if (args == null) {
-        writeOutput('Error: "unfinished quotation set.');
-        enablePrompt();
-      } else if (!args.isEmpty) {
-        String cmd = args.removeAt(0);
+      if (args == null)
+        throw '"unfinished quotation set.';
 
-        // Function look up
-        /**
-         *  TODO (camfitz): Make _cmds and _extCmds conform to same interface.
-         *  Wrap the whole caller in a function-
-         *    executeCommand(lookupCommand(cmd), args);
-         */
-        if (_cmds[cmd] is Function) {
-          _cmds[cmd](cmd, args);
-          enablePrompt();
-        } else if (_extCmds[cmd] is Function) {
-          new Future.sync(() => _extCmds[cmd](args)).then((_) => enablePrompt(),
-              onError: (e) {
-                writeOutput('$cmd error: $e');
-                enablePrompt();
-              });
-        } else if (!cmd.isEmpty) {
-          writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
-          enablePrompt();
-        }
-      } else {
-        enablePrompt();
+      if (args.isEmpty)
+        return new Future.value();
+
+      String cmd = args.removeAt(0);
+      if (_cmds[cmd] is Function) {
+        return new Future.sync(() => _cmds[cmd](args)).then((_) {},
+            onError: (e) => writeOutput('$cmd error: $e'));
       }
 
-      window.scrollTo(0, window.innerHeight);
-
-      // Ensures scrolls to prompt line even if no output recorded.
-      _cmdLine.scrollIntoView(ScrollAlignment.TOP);
-    }
+      if (!cmd.isEmpty)
+        writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
+    }).catchError((e) => writeOutput('error: $e'));
   }
 
   /**
@@ -210,9 +204,8 @@ class GitnuTerminal {
       'date': dateCommand,
       'who': whoCommand
     };
-
     // User added commands
-    _extCmds = commandList;
+    _cmds.addAll(commandList);
 
     // Somewhat importantly, print out a welcome header.
     // Headers are slightly mangled below due to escaped characters.
@@ -269,7 +262,6 @@ class GitnuTerminal {
     writeOutput('<div>Welcome to Gitnu! (v$_version)</div>');
     writeOutput(new DateTime.now().toLocal().toString());
     writeOutput('<p>Documentation: type "help"</p>');
-    writeOutput('<p>Initialise a root directory to begin.</p>');
   }
 
   /**
@@ -285,28 +277,27 @@ class GitnuTerminal {
    * Basic inbuilt commands.
    * User function invariant (except help... builds off user functions).
    */
-  void clearCommand(String cmd, List<String> args) {
+  void clearCommand(List<String> args) {
     _output.innerHtml = '';
   }
 
-  void helpCommand(String cmd, List<String> args) {
+  void helpCommand(List<String> args) {
     StringBuffer sb = new StringBuffer();
     sb.write('<div class="ls-files">');
     _cmds.keys.forEach((key) => sb.write('$key<br>'));
-    _extCmds.keys.forEach((key) => sb.write('$key<br>'));
     sb.write('</div>');
     writeOutput(sb.toString());
   }
 
-  void versionCommand(String cmd, List<String> args) {
+  void versionCommand(List<String> args) {
     writeOutput("$_version");
   }
 
-  void dateCommand(String cmd, var args) {
+  void dateCommand(List<String> args) {
     writeOutput(new DateTime.now().toLocal().toString());
   }
 
-  void whoCommand(String cmd, List<String> args) {
+  void whoCommand(List<String> args) {
     writeOutput('${StaticToolkit.htmlEscape(document.title)}<br>'
         'Basic terminal implementation - By:  Eric Bidelman '
         '&lt;ericbidelman@chromium.org&gt;, Adam Singer '
