@@ -36,11 +36,11 @@
           <li><a role="button" id="modalVisualButton">Visual Tool</a></li>
         </ul>
         <form class="navbar-form input-group directory-selector">
-          <input type="text" class="form-control" id="file_path"
+          <input type="text" class="form-control" id="filePath"
               value="Directory choice required." readonly>
           <span class="input-group-btn">
             <button class="btn btn-default" type="button" role="button"
-                id="choose_dir">Choose</button>
+                id="chooseDirButton">Choose</button>
           </span>
         </form>
       </div>
@@ -49,10 +49,14 @@
 
   <div id="container">
     <output id="output"></output>
-    <div id="input-line" class="input-line">
+    <div id="inputLine" class="input-line">
       <div id="prompt" class="prompt">$&gt;</div>
-      <div><input id="cmdline" class="cmdline" tabindex="1" autofocus /></div>
+      <div><input id="cmdLine" class="cmdline" tabindex="1" autofocus /></div>
     </div>
+  </div>
+  
+  <div id="pagerContainer">
+    <output id="pagerOutput"></output>
   </div>
   
   <!-- zlib libraries for Git operations -->

@@ -21,6 +21,7 @@ import '../lib/spark/spark/ide/app/lib/git/commands/push.dart';
 import '../gitnu.dart';
 import '../gitnufilesystem.dart';
 import '../gitnuoutput.dart';
+import '../gitnupager.dart';
 import '../statictoolkit.dart';
 
 part 'addcommand.dart';

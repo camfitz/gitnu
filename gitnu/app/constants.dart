@@ -2,40 +2,49 @@
  * Constants used in Gitnu.
  */
 
-// Div ID- where to put the root file path.
-final String kFilePathDiv = "#file_path";
+// Location to display file path.
+final String kFilePath = "#filePath";
 
-// Button ID- click to choose root file path.
-final String kChooseDirButton = "#choose_dir";
+// Button for choosing a root folder.
+final String kChooseDirButton = "#chooseDirButton";
 
-// Link ID- click to choose root file path, if not set on start-up.
-final String kChooseDirLink = "#choose_dir_link";
+// Link for choosing a root folder.
+final String kChooseDirLink = "#chooseDirLink";
 
 // Local storage key for the root folder.
 final String kRootFolder = "rootFolder";
 
-// Div ID- input container.
-final String kInputLine = '#input-line';
+// Prompt container.
+final String kInputLine = '#inputLine';
 
-// Div ID- output element.
+// Output element for commands.
 final String kOutputRegion = '#output';
 
-// Input ID- input field in the input container.
-final String kCmdLine = '#cmdline';
+// Input element in the prompt.
+final String kCmdLine = '#cmdLine';
 
-// Div ID- container for the command region.
+// Container for the prompt and output regions.
 final String kContainer = '#container';
 
-// Div ID- contains the prompt element ($>).
+// Container for the pager page.
+final String kPagerContainer = '#pagerContainer';
+
+// Container for the pager output.
+final String kPagerOutput = '#pagerOutput';
+
+// Container for the prompt element ($>).
 final String kPrompt = '#prompt';
 
-// Top margin height based on Bootstrap navbar
+// Top margin height based on Bootstrap navbar.
 final int kTopMargin = 54;
 
-// Various key codes
-const int pgDownKey = 34;
-const int pgUpKey = 33;
-const int endKey = 35;
-const int homeKey = 36;
-const int enterKey = 13;
-const int tabKey = 9;
+// Various key codes.
+const int DOWN_ARROW_KEY = 40;
+const int END_KEY = 35;
+const int ENTER_KEY = 13;
+const int HOME_KEY = 36;
+const int PG_DOWN_KEY = 34;
+const int PG_UP_KEY = 33;
+const int Q_KEY = 81;
+const int TAB_KEY = 9;
+const int UP_ARROW_KEY = 38;

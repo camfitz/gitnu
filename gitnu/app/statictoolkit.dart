@@ -1,5 +1,9 @@
 library StaticToolkit;
 
+import 'dart:html';
+
+import 'constants.dart';
+
 class StaticToolkit {
   StaticToolkit();
 
@@ -15,5 +19,15 @@ class StaticToolkit {
           .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
               .replaceAll("'", "&apos;");
+  }
+
+  /**
+   * Returns true if the key code matches a key used for navigating the page.
+   */
+  static bool isNavigateKey(KeyboardEvent event) {
+    return (event.keyCode == PG_DOWN_KEY ||
+        event.keyCode == PG_UP_KEY ||
+        event.keyCode == END_KEY ||
+        event.keyCode == HOME_KEY);
   }
 }

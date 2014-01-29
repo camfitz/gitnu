@@ -43,7 +43,7 @@ class RootPicker {
     _output.printHtml(
         '''Welcome to Gitnu terminal!<br>
            You need to choose a root folder before continuing.<br>
-           <a href="#" id="choose_dir_link">
+           <a href="#" id="chooseDirLink">
            Click to select root folder.</a><br>''');
     document.querySelector(kChooseDirLink).onClick.listen(chooseRootPrompt);
     // Force directory choice window

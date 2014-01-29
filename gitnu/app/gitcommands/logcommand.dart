@@ -27,27 +27,52 @@ class LogCommand extends GitCommandBase implements ShellCommand {
       return new Future.value();
     }
 
-    return _getRepo().then((ObjectStore store) {
+    return _getRepo().then((store) {
       String branch = null;
       if (commandLineOptions.rest.length > 0)
         branch = commandLineOptions.rest[0];
-      // TODO(camfitz): Implement paging awaiting git library support.
       int num = null;
       if (commandLineOptions['num'] != null)
         num = int.parse(commandLineOptions['num']);
-      return Log.log(store, num, branch).then((List<CommitObject> commits) {
-        for (CommitObject commit in commits) {
-          Map<String, String> commitMap = commit.toMap();
-          _output.printHtml(
-              '<span class="gold">commit ${commitMap['commit']}</span><br>');
-          _output.printHtml(
-              '''Author: ${commitMap['author_name']}
-              &lt;${commitMap['author_email']}&gt;<br>''');
-          _output.printHtml('Date: ${commitMap['date'].toString()}<br>');
-          _output.printHtml(
-              '<br><div class="indent-14">${commitMap['message']}</div><br>');
-        }
-      });
+      GitnuPager pager = new GitnuPager(
+          "Gitnu Log Viewer", new LogOutputGenerator(store, branch, num));
+      return pager.run();
     });
+  }
+}
+
+class LogOutputGenerator implements OutputGenerator {
+  ObjectStore _store;
+  String _branch;
+  Log _gitLog;
+  int _count;
+  int _max;
+
+  LogOutputGenerator(this._store, this._branch, this._max) {
+    _gitLog = new Log();
+    _count = 0;
+  }
+
+  Future<String> getNext() {
+    return _gitLog.log(_store, 1, _branch).then((List<CommitObject> commits) {
+      if (commits.length == 0 || (_max != null && _count >= _max))
+        return null;
+      StringBuffer b = new StringBuffer();
+      for (CommitObject commit in commits) {
+        b.write(formatCommit(commit.toMap()));
+        _count++;
+      }
+      return b.toString();
+    });
+  }
+
+  StringBuffer formatCommit(Map<String, String> commit) {
+    StringBuffer b = new StringBuffer();
+    b.write('<span class="gold">commit ${commit['commit']}</span><br>');
+    b.write('''Author: ${commit['author_name']}
+               &lt;${commit['author_email']}&gt;<br>''');
+    b.write('Date: ${commit['date'].toString()}<br>');
+    b.write('<br><div class="indent-14">${commit['message']}</div><br>');
+    return b;
   }
 }

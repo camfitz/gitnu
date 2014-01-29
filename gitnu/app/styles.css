@@ -9,7 +9,7 @@
   font-family: 'Helvetica', arial;
 }
 
-#container {
+#container, #pagerContainer {
   margin-top: 54px;
   position: absolute;
   top: 0px;
@@ -73,6 +73,15 @@ pre.help {
 .indent-14 {
   padding-left: 14px;
   display: block;
+}
+
+#pagerOutput {
+  font-size: 14px;
+  padding-left: 10px;
+}
+
+#pagerContainer {
+  display: none;
 }
 
 a {

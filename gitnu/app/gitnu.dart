@@ -27,7 +27,7 @@ class Gitnu {
   }
 
   void startShell(DirectoryEntry root) {
-    InputElement filePath = querySelector(kFilePathDiv);
+    InputElement filePath = querySelector(kFilePath);
     filePath.value = root.fullPath;
     _term.clearCommand(null);
     _fileSystem = new GitnuFileSystem(_output, root);

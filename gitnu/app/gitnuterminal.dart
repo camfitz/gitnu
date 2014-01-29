@@ -57,34 +57,34 @@ class GitnuTerminal {
    * Window pull focus to command line, unless inputting a position command.
    */
   void focusCommandLine(KeyboardEvent event) {
-    if (event.keyCode == pgDownKey || event.keyCode == pgUpKey ||
-        event.keyCode == endKey || event.keyCode == homeKey)
-      return;
-    _input.focus();
+    if (!StaticToolkit.isNavigateKey(event))
+      _input.focus();
   }
 
   /**
    * Handles scrolling using pgUp, pgDown, end and home keys.
    */
   void positionHandler(KeyboardEvent event) {
-    if (event.keyCode == pgDownKey || event.keyCode == pgUpKey ||
-        event.keyCode == endKey || event.keyCode == homeKey) {
-      event.preventDefault();
-      switch(event.keyCode) {
-        case pgUpKey:
-          _containerDiv.scrollByLines(-5);
-          break;
-        case pgDownKey:
-          _containerDiv.scrollByLines(5);
-          break;
-        case endKey:
-          _cmdLine.scrollIntoView(ScrollAlignment.TOP);
-          break;
-        case homeKey:
-          _output.scrollIntoView(ScrollAlignment.TOP);
-          break;
-      }
+    bool handled = true;
+    switch (event.keyCode) {
+      case PG_UP_KEY:
+        _containerDiv.scrollByLines(-5);
+        break;
+      case PG_DOWN_KEY:
+        _containerDiv.scrollByLines(5);
+        break;
+      case END_KEY:
+        _cmdLine.scrollIntoView(ScrollAlignment.TOP);
+        break;
+      case HOME_KEY:
+        _output.scrollIntoView(ScrollAlignment.TOP);
+        break;
+      default:
+        handled = false;
+        break;
     }
+    if (handled)
+      event.preventDefault();
   }
 
   /**
@@ -111,9 +111,9 @@ class GitnuTerminal {
    * or commandFromExternalList(cmd, ouputWriter, args) where appropriate.
    */
   void processNewCommand(KeyboardEvent event) {
-    if (event.keyCode == tabKey) {
+    if (event.keyCode == TAB_KEY) {
       event.preventDefault();
-    } else if (event.keyCode == enterKey) {
+    } else if (event.keyCode == ENTER_KEY) {
       if (!_input.value.isEmpty) {
         _history.add(_input.value);
         _historyPosition = _history.length;
@@ -165,26 +165,23 @@ class GitnuTerminal {
    * field when the up and down arrows are used.
    */
   void historyHandler(KeyboardEvent event) {
-    int upArrowKey = 38;
-    int downArrowKey = 40;
-
-    if (event.keyCode == upArrowKey || event.keyCode == downArrowKey) {
+    if (event.keyCode == UP_ARROW_KEY || event.keyCode == DOWN_ARROW_KEY) {
       event.preventDefault();
       if (_historyPosition < _history.length)
         _history[_historyPosition] = _input.value;
     }
 
-    if (event.keyCode == upArrowKey) {
+    if (event.keyCode == UP_ARROW_KEY) {
       _historyPosition--;
       if (_historyPosition < 0)
         _historyPosition = 0;
-    } else if (event.keyCode == downArrowKey) {
+    } else if (event.keyCode == DOWN_ARROW_KEY) {
       _historyPosition++;
       if (_historyPosition > _history.length)
         _historyPosition = max(0, _history.length);
     }
 
-    if (event.keyCode == upArrowKey || event.keyCode == downArrowKey) {
+    if (event.keyCode == UP_ARROW_KEY || event.keyCode == DOWN_ARROW_KEY) {
       if (_historyPosition == _history.length)
         _input.value = "";
       else if (_history.length != 0 && _history[_historyPosition] != null)
