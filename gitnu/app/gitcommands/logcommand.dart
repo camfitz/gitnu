@@ -60,7 +60,7 @@ class LogOutputGenerator implements OutputGenerator {
       for (CommitObject commit in commits) {
         b.write(formatCommit(commit.toMap()));
         _count++;
-        if (_max != null && _count > _max)
+        if (_max != null && _count == _max)
           break;
       }
       return b.toString();
