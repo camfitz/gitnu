@@ -44,8 +44,7 @@ class PushCommand extends GitCommandBase implements ShellCommand {
       _options.username = commandLineOptions['username'];
       _options.repoUrl = commandLineOptions['url'];
 
-      Push push = new Push();
-      return push.push(_options).then((value) {
+      return Push.push(_options).then((value) {
         // TODO(camfitz): Do something with the result.
         window.console.debug("$value");
       }, onError: (e) {

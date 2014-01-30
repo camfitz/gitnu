@@ -14,9 +14,12 @@ import '../lib/spark/spark/ide/app/lib/git/commands/branch.dart';
 import '../lib/spark/spark/ide/app/lib/git/commands/checkout.dart';
 import '../lib/spark/spark/ide/app/lib/git/commands/clone.dart';
 import '../lib/spark/spark/ide/app/lib/git/commands/commit.dart';
+import '../lib/spark/spark/ide/app/lib/git/commands/constants.dart';
+import '../lib/spark/spark/ide/app/lib/git/commands/index.dart';
 import '../lib/spark/spark/ide/app/lib/git/commands/log.dart';
 import '../lib/spark/spark/ide/app/lib/git/commands/pull.dart';
 import '../lib/spark/spark/ide/app/lib/git/commands/push.dart';
+import '../lib/spark/spark/ide/app/lib/git/commands/status.dart';
 
 import '../gitnu.dart';
 import '../gitnufilesystem.dart';
