@@ -43,24 +43,25 @@ class LogCommand extends GitCommandBase implements ShellCommand {
 
 class LogOutputGenerator implements OutputGenerator {
   ObjectStore _store;
-  String _branch;
   Log _gitLog;
   int _count;
   int _max;
 
-  LogOutputGenerator(this._store, this._branch, this._max) {
-    _gitLog = new Log();
+  LogOutputGenerator(this._store, String branch, this._max) {
+    _gitLog = new Log(_store, branch: branch);
     _count = 0;
   }
 
   Future<String> getNext() {
-    return _gitLog.log(_store, 1, _branch).then((List<CommitObject> commits) {
+    return _gitLog.getNextCommits().then((List<CommitObject> commits) {
       if (commits.length == 0 || (_max != null && _count >= _max))
         return null;
       StringBuffer b = new StringBuffer();
       for (CommitObject commit in commits) {
         b.write(formatCommit(commit.toMap()));
         _count++;
+        if (_max != null && _count > _max)
+          break;
       }
       return b.toString();
     });
