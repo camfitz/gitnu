@@ -59,10 +59,8 @@ class GitCommandBase {
    */
   Future<ObjectStore> _getRepo() {
     ObjectStore store = new ObjectStore(_fileSystem.getCurrentDirectory());
-    return _fileSystem.getCurrentDirectory().getDirectory(".git").then(
-      (DirectoryEntry gitDir) {
-        return store.load().then((_) => store);
-      }, onError: (_) => throw new Exception("not a git repository."));
+    return store.load().then((_) => store, onError: (_) =>
+        throw new Exception("not a git repository."));
   }
 
   String html(String input) {
