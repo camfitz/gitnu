@@ -59,7 +59,7 @@ class AuthPrompt {
     _completer.complete(output);
   }
 
-  Future run() {
+  Future<AuthDetails> run() {
     return _completer.future;
   }
 
