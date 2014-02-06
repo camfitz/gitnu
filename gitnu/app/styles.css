@@ -80,8 +80,23 @@ pre.help {
   padding-left: 10px;
 }
 
-#pagerContainer {
+#pagerContainer, #passwordContainer {
   display: none;
+}
+
+#passwordContainer {
+  width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #333333;
+  position: relative;
+  margin-top: 150px;
+  z-index: 3000;
+  padding: 10px;
+}
+
+#passwordContainer input {
+  margin: 3px;
 }
 
 a {

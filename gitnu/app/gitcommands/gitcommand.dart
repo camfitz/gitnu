@@ -21,10 +21,12 @@ import '../lib/spark/spark/ide/app/lib/git/commands/pull.dart';
 import '../lib/spark/spark/ide/app/lib/git/commands/push.dart';
 import '../lib/spark/spark/ide/app/lib/git/commands/status.dart';
 
+import '../constants.dart';
 import '../gitnu.dart';
 import '../gitnufilesystem.dart';
 import '../gitnuoutput.dart';
 import '../gitnupager.dart';
+import '../authprompt.dart';
 import '../statictoolkit.dart';
 
 part 'addcommand.dart';

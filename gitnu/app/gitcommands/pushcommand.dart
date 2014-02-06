@@ -39,17 +39,36 @@ class PushCommand extends GitCommandBase implements ShellCommand {
     return _getRepo().then((ObjectStore store) {
       _options.store = store;
       _options.root = _fileSystem.getCurrentDirectory();
-
       _options.password = commandLineOptions['password'];
       _options.username = commandLineOptions['username'];
       _options.repoUrl = commandLineOptions['url'];
+      return pushWithPasswordPrompt();
+    });
+  }
 
-      return Push.push(_options).then((value) {
-        // TODO(camfitz): Do something with the result.
-        window.console.debug("$value");
-      }, onError: (e) {
+  Future pushWithPasswordPrompt() {
+    return Push.push(_options).then((value) {
+      // TODO(camfitz): Do something with the result.
+      _output.printLine("push was successful.");
+    }, onError: (e) {
+      final String invalidMessage = "Invalid username or password.";
+      final String anonymousMessage = "Anonymous access to";
+      if (e is StateError)
+        throw e;
+      if (e == invalidMessage || e.startsWith(anonymousMessage)) {
+        _output.printLine("authentication failed.");
+        AuthPrompt authPrompt =
+            new AuthPrompt("Authentication required for push");
+        return authPrompt.run().then((AuthDetails resultAuth) {
+          if (resultAuth == null)
+            throw new Exception("authentication required");
+          _options.username = resultAuth.username;
+          _options.password = resultAuth.password;
+          return pushWithPasswordPrompt();
+        });
+      } else {
         _output.printLine("push error: $e");
-      });
+      }
     });
   }
 }

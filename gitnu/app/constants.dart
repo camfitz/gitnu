@@ -1,3 +1,4 @@
+library gitnuConstants;
 /**
  * Constants used in Gitnu.
  */
@@ -34,6 +35,21 @@ final String kPagerOutput = '#pagerOutput';
 
 // Container for the prompt element ($>).
 final String kPrompt = '#prompt';
+
+// Container for the password popup.
+final String kPasswordContainer = '#passwordContainer';
+
+// Container for the password popup title.
+final String kPasswordTitle = '#passwordTitle';
+
+// Input element for passwords.
+final String kPassword = '#password';
+
+// Input element for usernames.
+final String kUsername = '#username';
+
+// Button for authenticating.
+final String kAuthButton = '#authButton';
 
 // Top margin height based on Bootstrap navbar.
 final int kTopMargin = 54;
