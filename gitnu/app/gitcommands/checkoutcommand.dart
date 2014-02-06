@@ -36,25 +36,33 @@ class CheckoutCommand extends GitCommandBase implements ShellCommand {
       if (args.isEmpty)
         throw new Exception("no branch name passed to git checkout.");
 
-      _options.branchName = commandLineOptions['branch'];
-      if (_options.branchName.length > 0) {
-        // TODO(camfitz): Fix potential timing problem here.
-        return new BranchCommand(_output, _fileSystem, _options).run(
-            [_options.branchName]).then((_) {
-          return new CheckoutCommand(_output, _fileSystem, _options).run(
-              [_options.branchName]);
+      return store.getCurrentBranch().then((String currentBranch) {
+        return store.getAllHeads().then((List<String> branches) {
+          String branchName = commandLineOptions['branch'];
+          if (branchName != null && !branchName.isEmpty) {
+              if (branches.contains(branchName)) {
+                throw new Exception("""A branch named '${branchName}' 
+                                       already exists.""");
+              }
+              return new BranchCommand(_output, _fileSystem, _options).run(
+                  [branchName]).then((_) {
+                _options.branchName = null;
+                return new CheckoutCommand(_output, _fileSystem, _options).run(
+                    [branchName]);
+              });
+          }
+
+          _options.store = store;
+          _options.root = _fileSystem.getCurrentDirectory();
+          _options.branchName = commandLineOptions.rest[0];
+
+          if (currentBranch == _options.branchName)
+            throw new Exception("Already on '$currentBranch'");
+
+          return Checkout.checkout(_options).then((value) {
+            _output.printLine("Switched to branch '${_options.branchName}'");
+          }, onError: (e) => _output.printLine("checkout error: $e"));
         });
-      }
-
-      _options.store = store;
-      _options.root = _fileSystem.getCurrentDirectory();
-      _options.branchName = args[0];
-
-      return Checkout.checkout(_options).then((value) {
-        // TODO(camfitz): Do something with the result.
-        _output.printLine("checkout success: $value");
-      }, onError: (e) {
-        _output.printLine("checkout error: $e");
       });
     });
   }

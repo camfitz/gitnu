@@ -50,9 +50,7 @@ class BranchCommand extends GitCommandBase implements ShellCommand {
       _options.root = _fileSystem.getCurrentDirectory();
       _options.branchName = commandLineOptions.rest[0];
 
-      return Branch.branch(_options).then((value) {
-        // TODO(camfitz): Do something with the result.
-      }, onError: (e) {
+      return Branch.branch(_options).then((value) {}, onError: (e) {
         _output.printLine("branch error: $e");
       });
     });
