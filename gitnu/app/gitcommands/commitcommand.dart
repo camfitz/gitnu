@@ -27,6 +27,10 @@ class CommitCommand extends GitCommandBase implements ShellCommand {
   }
 
   @override
+  Future<List<String>> getAllCompletions(List<String> args) =>
+      new Future.value([]);
+
+  @override
   Future run(List<String> args) {
     ArgResults commandLineOptions = getArgParser().parse(args);
 

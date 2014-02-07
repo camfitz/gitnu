@@ -8,8 +8,9 @@ import 'lib/spark/spark/ide/app/lib/git/options.dart';
 import 'package:chrome_gen/chrome_app.dart' as chrome;
 import 'gitcommands/gitcommand.dart';
 import 'gitnu.dart';
-import 'gitnuoutput.dart';
 import 'gitnufilesystem.dart';
+import 'gitnuoutput.dart';
+import 'gitnutabcompleter.dart';
 
 class GitWrapper {
   // Default options provided when running a Git command.
@@ -78,6 +79,40 @@ class GitWrapper {
     if (!args.isEmpty)
       subCommand = args.removeAt(0);
     return _lookupCommand(subCommand).run(args);
+  }
+
+  /**
+   * Dispatches a received tab completion request to the appropriate Git
+   * command, if possible.
+   *
+   * Form expected for args:
+   * git [partial-command] [partial-argument]
+   *
+   * If the command is not present or incomplete, the completer will return
+   * Git command options appropriately.
+   * If the command is complete, it's tab completer will be called.
+   */
+  Future<List<String>> tabCompleter(List<String> args) {
+    return new Future.sync(() {
+      // args = ["git", "x"] ==> x will be a portion of a command.
+      if (args.length == 2) {
+        return GitnuTabCompleter.filterList(
+            _commandFactories.keys.toList()..sort(), args[1]);
+      }
+
+      // args = ["git", "x", "y"] ==> y may be an empty string (to denote a
+      // trailing space, implying we should look to autocomplete y).
+      if (_commandFactories.containsKey(args[1]) && args.length == 3) {
+        return _lookupCommand(args[1]).getAllCompletions(args).then(
+            (List<String> options) {
+          return GitnuTabCompleter.filterList(options, args[2]);
+        });
+      }
+
+      // Otherwise, return the empty list.
+      // i.e. args = ["git"] => invalid input.
+      return [];
+    });
   }
 
   /**

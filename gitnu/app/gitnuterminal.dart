@@ -5,6 +5,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'constants.dart';
+import 'gitnuoutput.dart';
+import 'gitnutabcompleter.dart';
 import 'statictoolkit.dart';
 import 'stringutils.dart';
 
@@ -18,7 +20,8 @@ class GitnuTerminal {
   List<String> _history = [];
   int _historyPosition = 0;
   Map<String, Function> _cmds;
-  Map<String, Function> _extCmds;
+  Map<String, Function> _tabCompletion;
+  GitnuOutput _gitnuOutput;
 
   GitnuTerminal() {
     _cmdLine = document.querySelector(kInputLine);
@@ -26,6 +29,8 @@ class GitnuTerminal {
     _input = document.querySelector(kCmdLine);
     _containerDiv = document.querySelector(kContainer);
     _prompt = document.querySelector(kPrompt);
+
+    _gitnuOutput = new GitnuOutput(writeOutput);
 
     // Prompt will need to be enabled by client.
     disablePrompt();
@@ -40,9 +45,11 @@ class GitnuTerminal {
     // screen position.
     window.onKeyDown.listen(focusCommandLine);
 
-    // Handle up/down key presses for shell history and enter for new command.
+    // Handle up/down key presses for history, tab completion and enter for
+    // new command.
     _cmdLine.onKeyDown.listen(historyHandler);
     _cmdLine.onKeyDown.listen(processNewCommand);
+    _cmdLine.onKeyDown.listen(tabCompleterEvent);
 
     // Handles pgUp, pgDown, end and home scrolling
     _containerDiv.onKeyDown.listen(positionHandler);
@@ -106,28 +113,35 @@ class GitnuTerminal {
   }
 
   /**
+   * Adds the current input element to the history list, moves it into a div
+   * in the output pane, and creates a new input element.
+   */
+  void commitBufferToLog() {
+    if (!_input.value.isEmpty) {
+      _history.add(_input.value);
+      _historyPosition = _history.length;
+    }
+
+    // Move the line to output and remove id's.
+    DivElement line = _input.parent.parent.clone(true);
+    line.attributes.remove('id');
+    line.classes.add('line');
+    InputElement cmdInput = line.querySelector(kCmdLine);
+    cmdInput.attributes.remove('id');
+    cmdInput.autofocus = false;
+    cmdInput.readOnly = true;
+    _output.children.add(line);
+  }
+
+  /**
    * Handles command input
    * Dispatches a function call either to commandFromList(cmd, args)
    * or commandFromExternalList(cmd, ouputWriter, args) where appropriate.
    */
   void processNewCommand(KeyboardEvent event) {
-    if (event.keyCode == TAB_KEY) {
-      event.preventDefault();
-    } else if (event.keyCode == ENTER_KEY) {
-      if (!_input.value.isEmpty) {
-        _history.add(_input.value);
-        _historyPosition = _history.length;
-      }
+    if (event.keyCode == ENTER_KEY) {
+      commitBufferToLog();
 
-      // Move the line to output and remove id's.
-      DivElement line = _input.parent.parent.clone(true);
-      line.attributes.remove('id');
-      line.classes.add('line');
-      InputElement cmdInput = line.querySelector(kCmdLine);
-      cmdInput.attributes.remove('id');
-      cmdInput.autofocus = false;
-      cmdInput.readOnly = true;
-      _output.children.add(line);
       String cmdline = _input.value;
       _input.value = ""; // clear input
       disablePrompt();
@@ -190,10 +204,54 @@ class GitnuTerminal {
   }
 
   /**
+   * Prints the tab completion output.
+   * If there is only one option, the input field will be updated.
+   * If there is more than one option, a full list will be displayed.
+   */
+  void writeTabCompleter(String cmdLine,
+                         String currentWord,
+                         List<String> options) {
+    // If the input field has changed since the tab complete was called.
+    // (i.e. due to an async complete taking too long, double hit of tab key).
+    if (cmdLine != _input.value)
+      return;
+
+    if (options.isEmpty)
+      return;
+
+    if (options.length == 1) {
+      _input.value += options[0].replaceFirst(currentWord, '') + ' ';
+      return;
+    }
+
+    commitBufferToLog();
+    _gitnuOutput.printStringColumns(options);
+  }
+
+  /**
+   * Event handler for a tab completion event.
+   * Prevents default tab behaviour and then fires the tab completion function.
+   */
+  void tabCompleterEvent(KeyboardEvent event) {
+    if (event.keyCode != TAB_KEY)
+      return;
+    event.preventDefault();
+    GitnuTabCompleter.tabCompleter(_input.value, _cmds, _tabCompletion).then(
+        (Completion completion) {
+      if (completion != null)
+        writeTabCompleter(
+            completion.cmdLine, completion.last, completion.options);
+    });
+  }
+
+
+
+  /**
    * Establishes commands that can be called from the terminal and prints a
    * welcome note. Accepts a map of user commands to be called.
    */
-  void initialiseCommands(Map<String, Function> commandList) {
+  void initialiseCommands(Map<String, Function> commandList,
+                          Map<String, Function> tabCompletion) {
     _cmds = {
       'clear': clearCommand,
       'help': helpCommand,
@@ -204,10 +262,14 @@ class GitnuTerminal {
     // User added commands
     _cmds.addAll(commandList);
 
+    // User added tab completions
+    _tabCompletion = new Map<String, Function>();
+    _tabCompletion.addAll(tabCompletion);
+
     // Somewhat importantly, print out a welcome header.
     // Headers are slightly mangled below due to escaped characters.
     var rng = new Random();
-    int choice = rng.nextInt(3);
+    int choice = rng.nextInt(4);
 
     if (choice == 0) {
       writeOutput('<pre class="logo">'

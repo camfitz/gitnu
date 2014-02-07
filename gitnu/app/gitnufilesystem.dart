@@ -44,6 +44,41 @@ class GitnuFileSystem {
     _output.printLine(getCurrentDirectoryString());
   }
 
+  Future listEntries([Function keepResults]) {
+    List<Entry> entries = [];
+    DirectoryReader reader = _cwd.createReader();
+    Completer completer = new Completer();
+
+    void readEntries() {
+      reader.readEntries().then((List<Entry> results) {
+        if (results.length == 0) {
+          entries.sort((a, b) => a.name.compareTo(b.name));
+          if (keepResults != null)
+            entries.retainWhere(keepResults);
+          completer.complete(entries);
+        } else {
+          entries.addAll(results);
+          readEntries();
+        }
+      }, onError: (e) {
+        completer.complete(null);
+      });
+    };
+
+    readEntries();
+    return completer.future;
+  }
+
+  Future<List<String>> tabCompleteDirectory(List<String> args) {
+    return listEntries((Entry entry) => entry.isDirectory).then(
+        (List<Entry> entries) => entries.map((Entry entry) => entry.name));
+  }
+
+  Future<List<String>> tabCompleteFile(List<String> args) {
+    return listEntries((Entry entry) => entry.isFile).then(
+        (List<Entry> entries) => entries.map((Entry entry) => entry.name));
+  }
+
   /**
    * The file system API documentation (FileError deprecation doc:
    * https://developer.mozilla.org/en-US/docs/Web/API/FileError) says that
@@ -140,28 +175,7 @@ class GitnuFileSystem {
    * https://developer.mozilla.org/en-US/docs/Web/API/DirectoryReader
    */
   Future lsCommand(List<String> args) {
-    List<Entry> entries = [];
-    DirectoryReader reader = _cwd.createReader();
-    Completer completer = new Completer();
-
-    void readEntries() {
-      reader.readEntries().then((List<Entry> results) {
-        if (results.length == 0) {
-          entries.sort((a, b) => a.name.compareTo(b.name));
-          _output.printColumns(entries);
-          completer.complete();
-        } else {
-          entries.addAll(results);
-          readEntries();
-        }
-      }, onError: (e) {
-        printError(e);
-        completer.complete();
-      });
-    };
-
-    readEntries();
-    return completer.future;
+    return listEntries().then(_output.printEntryColumns);
   }
 
   Future createDirectory(DirectoryEntry rootDirEntry, List<String> folders) {

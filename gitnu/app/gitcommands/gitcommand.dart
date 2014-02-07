@@ -65,6 +65,16 @@ class GitCommandBase {
         throw new Exception("not a git repository."));
   }
 
+  Future<List<String>> _getBranches() {
+    return _getRepo().then((ObjectStore store) {
+      return store.getCurrentBranch().then((String currentBranch) {
+        return store.getAllHeads().then((List<String> branches) {
+          return branches..sort();
+        });
+      });
+    }, onError: (e) => new Future.value([]));
+  }
+
   String html(String input) {
     return StaticToolkit.htmlEscape(input);
   }

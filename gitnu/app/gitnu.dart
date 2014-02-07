@@ -52,13 +52,25 @@ class Gitnu {
       'git': _gitWrapper.gitDispatcher
     };
 
-    _term.initialiseCommands(commandList);
+    Map<String, Function> tabCompletion;
+    tabCompletion = {
+      'ls': _fileSystem.tabCompleteDirectory,
+      'cd': _fileSystem.tabCompleteDirectory,
+      'open': _fileSystem.tabCompleteFile,
+      'rm': _fileSystem.tabCompleteFile,
+      'rmdir': _fileSystem.tabCompleteDirectory,
+      'cat': _fileSystem.tabCompleteFile,
+      'git': _gitWrapper.tabCompleter
+    };
+
+    _term.initialiseCommands(commandList, tabCompletion);
     _term.enablePrompt();
   }
 }
 
 /**
  * A command that is executable from the shell.
+ * TODO: Make Filesystem commands conform to ShellCommand interface.
  */
 abstract class ShellCommand {
   /**
@@ -70,4 +82,10 @@ abstract class ShellCommand {
    * handled accordingly.
    */
   Future run(List<String> args);
+
+  /**
+   * A function that returns a list of options for the tab completer when
+   * passed in arguments.
+   */
+  Future<List<String>> getAllCompletions(List<String> args);
 }

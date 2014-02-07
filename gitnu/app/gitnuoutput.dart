@@ -31,24 +31,6 @@ class GitnuOutput {
   }
 
   /**
-   * Print a list of items in nice columns.
-   */
-  void printColumns(List<Entry> entries) {
-    if (entries.length != 0) {
-      StringBuffer html = _formatColumns(entries);
-      entries.forEach((file) {
-        var fileType = file.isDirectory ? 'folder' : 'file';
-        var span = '<span class="$fileType">'
-                   '${StaticToolkit.htmlEscape(file.name)}</span><br>';
-        html.write(span);
-      });
-
-      html.write('</div>');
-      printHtml(html.toString());
-    }
-  }
-
-  /**
    * Prints a HTML pre-formatted string.
    */
   void printHtml(String line) {
@@ -56,35 +38,64 @@ class GitnuOutput {
   }
 
   /**
-   * Takes a list and establishes the number of columns to best output the list.
+   * Print a list of entries into columns.
+   */
+  void printEntryColumns(List<Entry> entries) {
+    _printColumns(entries,
+                  (Entry entry) => entry.name,
+                  (Entry entry) => entry.isDirectory ? 'folder' : 'file');
+  }
+
+  /**
+   * Print a list of strings into columns.
+   */
+  void printStringColumns(List<String> items) {
+    _printColumns(items, (String item) => item, null);
+  }
+
+  /**
+   * Generic column printer.
+   */
+  void _printColumns(List items, Function stringify, Function displayClass) {
+    if (items.length != 0) {
+      StringBuffer html = new StringBuffer();
+      int maxLength = 0;
+      items.forEach((item) {
+        if (displayClass != null)
+          html.write('<span class="${displayClass(item)}">');
+        else
+          html.write('<span>');
+        String itemString = stringify(item);
+        if (itemString.length > maxLength)
+          maxLength = itemString.length;
+        html.write('${StaticToolkit.htmlEscape(itemString)}</span><br>');
+      });
+      html.write('</div>');
+      StringBuffer formatBuffer = _formatColumns(maxLength);
+      formatBuffer.write(html);
+      printHtml(formatBuffer.toString());
+    }
+  }
+
+  /**
+   * Takes an int and establishes the number of columns to best output a list of
+   * items where that int is the maximum length required to display.
    * Returns an HTML string representing then opening div for a table of
    * entries.
    */
-  StringBuffer _formatColumns(List<Entry> entries) {
-    var maxName = entries[0].name;
-    entries.forEach((entry) {
-      if (entry.name.length > maxName.length) {
-        maxName = entry.name;
-      }
-    });
-
+  StringBuffer _formatColumns(int maxLength) {
+    if (maxLength == 0)
+      return new StringBuffer('<div>');
     StringBuffer sb = new StringBuffer();
 
-    /**
-     * Max column width required
-     * pxWidth = emWidth * parent font size
-     * Parent font size = 14px
-     * emWidth set to max out at the maximum string length.
-     */
-    var pxWidth = maxName.length * 14;
+    // Experimented width required for a column.
+    var pxWidth = maxLength * 9;
+    if (maxLength < 12)
+      pxWidth = maxLength * 12;
+    if (maxLength < 2)
+      pxWidth = maxLength * 30;
 
-    int colCount = 3;
-    if (pxWidth > window.innerWidth ~/ 2) {
-      colCount = 1;
-    } else if (pxWidth > window.innerWidth ~/ 3) {
-      colCount = 2;
-    }
-
+    int colCount = window.innerWidth ~/ pxWidth;
     sb.write('<div class="ls-files" style="-webkit-column-count: $colCount;">');
     return sb;
   }
