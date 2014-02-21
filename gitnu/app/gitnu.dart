@@ -22,7 +22,7 @@ class Gitnu {
 
   void run() {
     _term = new GitnuTerminal(new GitnuTerminalView());
-    _output = new GitnuOutput(_term.writeOutput);
+    _output = new GitnuOutput(_term.view.output, _term.view.cmdLine);
     RootPicker rootPicker = new RootPicker(_output, startShell);
   }
 
@@ -54,7 +54,7 @@ class Gitnu {
 
     Map<String, Function> tabCompletion;
     tabCompletion = {
-      'ls': _fileSystem.tabCompleteDirectory,
+      'ls': _fileSystem.tabCompleteContents,
       'cd': _fileSystem.tabCompleteDirectory,
       'open': _fileSystem.tabCompleteFile,
       'rm': _fileSystem.tabCompleteFile,

@@ -1,12 +1,92 @@
 /* Styles for Gitnu */
+::selection {
+  background: #FF5E99;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-size: 12px;
+  font-family: monospace;
+  background-color: black;
+}
+
+output, input {
+  color: #CCCCCC;
+}
+
+.folder {
+  color: #00BFFF;
+}
+
+#container {
+  padding: 1em 1.5em 1em 1em;
+}
+
+#container output {
+  clear: both;
+  width: 100%;
+}
+
+.input-line {
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: horizontal;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: horizontal;
+  box-align: stretch;
+  clear: both;
+  color: #FFFFFF;
+}
+
+.input-line > div:nth-child(2) {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  box-flex: 1;
+}
+
+.prompt {
+  white-space: nowrap;
+  color: #84BE6A;
+  margin-right: 7px;
+  display: -webkit-box;
+  -webkit-box-pack: center;
+  -webkit-box-orient: vertical;
+  display: -moz-box;
+  -moz-box-pack: center;
+  -moz-box-orient: vertical;
+  display: box;
+  box-pack: center;
+  box-orient: vertical;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.cmdline {
+  outline: none;
+  background-color: transparent;
+  margin: 0;
+  width: 100%;
+  font: inherit;
+  border: none;
+}
+
+.ls-files {
+  width: 100%;
+  max-width: 100%;
+}
+
 .content div {
   font-family: 'Helvetica', arial;
   font-size: 16px;
-}
-
-.modal div {
-  color: #333333;
-  font-family: 'Helvetica', arial;
 }
 
 #container, #pagerContainer {
@@ -45,7 +125,7 @@ pre {
 }
 
 pre.help {
-  color: #555555;
+  color: #FFFFFF;
 }
 
 .line {
@@ -59,7 +139,7 @@ pre.help {
 }
 
 .line pre {
-  color: #555555;
+  color: #FFFFFF;
 }
 
 .green {

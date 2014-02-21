@@ -44,9 +44,13 @@ class GitnuFileSystem {
     _output.printLine(getCurrentDirectoryString());
   }
 
-  Future listEntries([Function keepResults]) {
+  /**
+   * Why the looped call?
+   * https://developer.mozilla.org/en-US/docs/Web/API/DirectoryReader
+   */
+  Future listEntries(DirectoryEntry dir, [Function keepResults]) {
     List<Entry> entries = [];
-    DirectoryReader reader = _cwd.createReader();
+    DirectoryReader reader = dir.createReader();
     Completer completer = new Completer();
 
     void readEntries() {
@@ -69,14 +73,28 @@ class GitnuFileSystem {
     return completer.future;
   }
 
+  Future<List<String>> tabCompleteContents(List<String> args) {
+    return listEntries(_cwd).then((List<Entry> entries) =>
+        validCompletions(entries, args.last));
+  }
+
   Future<List<String>> tabCompleteDirectory(List<String> args) {
-    return listEntries((Entry entry) => entry.isDirectory).then(
-        (List<Entry> entries) => entries.map((Entry entry) => entry.name));
+    return listEntries(_cwd, (Entry entry) => entry.isDirectory).then(
+        (List<Entry> entries) => validCompletions(entries, args.last));
   }
 
   Future<List<String>> tabCompleteFile(List<String> args) {
-    return listEntries((Entry entry) => entry.isFile).then(
-        (List<Entry> entries) => entries.map((Entry entry) => entry.name));
+    return listEntries(_cwd, (Entry entry) => entry.isFile).then(
+        (List<Entry> entries) => validCompletions(entries, args.last));
+  }
+
+  /**
+   * Returns a list of valid completion strings from a list of possible
+   * [entries] and the current portion of string entered.
+   */
+  List<String> validCompletions(List<Entry> entries, String currentWord) {
+    entries.retainWhere((Entry entry) => entry.name.startsWith(currentWord));
+    return entries.map((Entry entry) => entry.name).toList();
   }
 
   /**
@@ -129,17 +147,21 @@ class GitnuFileSystem {
     if (args.length >= 1) {
       var fileName = args[0];
       return read(fileName).then((String result) {
-        List<String> lines =
-            "${StaticToolkit.htmlEscape(result)}".split("\n");
+        result = StaticToolkit.htmlEscape(result);
+        int numberOfLines = result.split("\n").length;
         StringBuffer numberedLines = new StringBuffer();
-        for (int i = 0; i < lines.length; i++)
+        for (int i = 0; i < numberOfLines; i++)
           numberedLines.write('${i+1}\r\n');
 
-        _output.printHtml('''<table class="out"><tr>
-                                <td class="line">
-                                  <pre>${numberedLines.toString()}</pre></td>
-                                <td class="file"><pre>$result</pre></td>
-                              </tr></table>''');
+        DivElement d = new DivElement();
+        d.innerHtml = '''<table class="out"><tr>
+                            <td class="line">
+                              <pre id="numbers"></pre></td>
+                            <td class="file"><pre id="result"></pre></td>
+                          </tr></table>''';
+        d.querySelector('#numbers').innerHtml = numberedLines.toString();
+        d.querySelector('#result').innerHtml = result;
+        _output.appendElement(d);
       }, onError: (error) {
         String name = getErrorName(error);
         if (name == DomException.INVALID_STATE) {
@@ -170,12 +192,18 @@ class GitnuFileSystem {
     }, onError: (FileError error) => printFileError(error, "cd", dest));
   }
 
-  /**
-   * Why the looped call?
-   * https://developer.mozilla.org/en-US/docs/Web/API/DirectoryReader
-   */
   Future lsCommand(List<String> args) {
-    return listEntries().then(_output.printEntryColumns);
+    if (!args.isEmpty) {
+      return _cwd.getDirectory(args[0]).then((DirectoryEntry dirEntry) {
+        return listEntries(dirEntry).then(_output.printEntryColumns);
+      }, onError: (FileError error) {
+        // Print the file name, if argument is a filename.
+        if (getErrorName(error) == DomException.TYPE_MISMATCH)
+          return _output.printStringColumns([args[0]]);
+        return printFileError(error, "ls", args[0]);
+      });
+    }
+    return listEntries(_cwd).then(_output.printEntryColumns);
   }
 
   Future createDirectory(DirectoryEntry rootDirEntry, List<String> folders) {

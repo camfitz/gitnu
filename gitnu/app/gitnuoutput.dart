@@ -12,15 +12,37 @@ import "statictoolkit.dart";
  */
 class GitnuOutput {
   /**
-   * Baseline function for printing to an output stream.
+   * Baseline element to append to.
    */
-  Function _stringPrinter;
+  OutputElement _output;
+
+  /**
+   * DivElement to scroll into view after appending output.
+   */
+  DivElement _cmdLine;
 
   /**
    * Constructor for the class.
    * Expected to receive the stringPrinter from the low level display class.
    */
-  GitnuOutput(this._stringPrinter);
+  GitnuOutput(this._output, this._cmdLine);
+
+  /**
+   * Writes to output element and then scrolls into view of the scrollTo
+   * element. Internal function wrapped by other printing functions.
+   */
+  void _stringPrinter(String h) {
+    _output.insertAdjacentHtml('beforeEnd', h);
+    _cmdLine.scrollIntoView(ScrollAlignment.TOP);
+  }
+
+  /**
+   * Appends an Element to the page, then scrolls into view.
+   */
+  void appendElement(Element e) {
+    _output.append(e);
+    _cmdLine.scrollIntoView(ScrollAlignment.TOP);
+  }
 
   /**
    * Prints a newline terminated string.

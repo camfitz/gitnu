@@ -57,7 +57,7 @@ class PushCommand extends GitCommandBase implements ShellCommand {
     }, onError: (e) {
       final String invalidMessage = "Invalid username or password.";
       final String anonymousMessage = "Anonymous access to";
-      if (e is StateError)
+      if (e is StateError || e is NoSuchMethodError)
         throw e;
       if (e == invalidMessage || e.startsWith(anonymousMessage)) {
         _output.printLine("authentication failed.");

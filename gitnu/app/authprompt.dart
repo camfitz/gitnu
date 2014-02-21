@@ -23,6 +23,8 @@ class AuthPrompt {
   AuthPrompt(String title) {
     _username = document.querySelector(kUsername);
     _password = document.querySelector(kPassword);
+    _username.value = "";
+    _password.value = "";
     _authButton = document.querySelector(kAuthButton);
     _passwordContainer = document.querySelector(kPasswordContainer);
     _passwordTitle = document.querySelector(kPasswordTitle);

@@ -60,7 +60,7 @@ class GitnuTerminal {
   bool killNew = true;
 
   GitnuTerminal(this.view) {
-    _gitnuOutput = new GitnuOutput(writeOutput);
+    _gitnuOutput = new GitnuOutput(view.output, view.cmdLine);
 
     // Prompt will need to be enabled by client.
     disablePrompt();
@@ -285,12 +285,13 @@ class GitnuTerminal {
       String cmd = args.removeAt(0);
       if (_cmds[cmd] is Function) {
         return new Future.sync(() => _cmds[cmd](args)).then((_) {},
-            onError: (e) => writeOutput('$cmd error: $e'));
+            onError: (e) => _gitnuOutput.printHtml('$cmd error: $e'));
       }
 
       if (!cmd.isEmpty)
-        writeOutput('${StaticToolkit.htmlEscape(cmd)}: command not found');
-    }).catchError((e) => writeOutput('error: $e'));
+        _gitnuOutput.printHtml(
+            '${StaticToolkit.htmlEscape(cmd)}: command not found');
+    }).catchError((e) => _gitnuOutput.printHtml('error: $e'));
   }
 
   /**
@@ -365,8 +366,6 @@ class GitnuTerminal {
     });
   }
 
-
-
   /**
    * Establishes commands that can be called from the terminal and prints a
    * welcome note. Accepts a map of user commands to be called.
@@ -393,7 +392,7 @@ class GitnuTerminal {
     int choice = rng.nextInt(4);
 
     if (choice == 0) {
-      writeOutput('<pre class="logo">'
+      _gitnuOutput.printHtml('<pre class="logo">'
         '           ######   #### ######## ##    ## ##     ## <br>'
         '          ##    ##   ##     ##    ###   ## ##     ## <br>'
         '          ##         ##     ##    ####  ## ##     ## <br>'
@@ -402,7 +401,7 @@ class GitnuTerminal {
         '          ##    ##   ##     ##    ##   ### ##     ## <br>'
         '           ######   ####    ##    ##    ##  #######  </pre>');
     } else if (choice == 1) {
-      writeOutput('<pre class="logo">'
+      _gitnuOutput.printHtml('<pre class="logo">'
       '      ___                           ___         ___      <br>'
       '     /  /\\      ___         ___    /__/\\       /__/\\     <br>'
       '    /  /:/_    /  /\\       /  /\\   \\  \\:\\      \\  \\:\\    <br>'
@@ -418,7 +417,7 @@ class GitnuTerminal {
       '     \\__\\/                         \\__\\/       \\__\\/     '
       '</pre>');
     } else if (choice == 2) {
-      writeOutput('<pre class="logo">'
+      _gitnuOutput.printHtml('<pre class="logo">'
       '      .-_\'\'\'-.  .-./`) ,---------. ,---.   .--.  ___    _  <br>'
       '     \'_( )_   \\ \\ .-.\')\\          \\|    \\  |  |.\'   |  | | <br>'
       '    |(_ o _)|  \'/ `-\' \\ `--.  ,---\'|  ,  \\ |  ||   .\'  | | <br>'
@@ -430,7 +429,7 @@ class GitnuTerminal {
       '       `\'-...-\'  \'---\'     \'---\'   \'--\'    \'--\'  ``-\'`-\'\'  '
       '</pre>');
     } else if (choice == 3) {
-      writeOutput('<pre class="logo">'
+      _gitnuOutput.printHtml('<pre class="logo">'
       '         _/_/_/  _/    _/                        <br>'
       '      _/            _/_/_/_/  _/_/_/    _/    _/ <br>'
       '     _/  _/_/  _/    _/      _/    _/  _/    _/  <br>'
@@ -439,18 +438,9 @@ class GitnuTerminal {
       '</pre>');
     }
 
-    writeOutput('<div>Welcome to Gitnu! (v$version)</div>');
-    writeOutput(new DateTime.now().toLocal().toString());
-    writeOutput('<p>Documentation: type "help"</p>');
-  }
-
-  /**
-   * Writes to output element and then scrolls into view of the scrollTo
-   * element.
-   */
-  void writeOutput(String h) {
-    view.output.insertAdjacentHtml('beforeEnd', h);
-    view.cmdLine.scrollIntoView(ScrollAlignment.TOP);
+    _gitnuOutput.printHtml('<div>Welcome to Gitnu! (v$version)</div>');
+    _gitnuOutput.printHtml(new DateTime.now().toLocal().toString());
+    _gitnuOutput.printHtml('<p>Documentation: type "help"</p>');
   }
 
   /**
@@ -468,19 +458,19 @@ class GitnuTerminal {
     sb.write('<div class="ls-files">');
     _cmds.keys.forEach((key) => sb.write('$key<br>'));
     sb.write('</div>');
-    writeOutput(sb.toString());
+    _gitnuOutput.printHtml(sb.toString());
   }
 
   void versionCommand(List<String> args) {
-    writeOutput("$version");
+    _gitnuOutput.printHtml("$version");
   }
 
   void dateCommand(List<String> args) {
-    writeOutput(new DateTime.now().toLocal().toString());
+    _gitnuOutput.printHtml(new DateTime.now().toLocal().toString());
   }
 
   void whoCommand(List<String> args) {
-    writeOutput('${StaticToolkit.htmlEscape(document.title)}<br>'
+    _gitnuOutput.printHtml('${StaticToolkit.htmlEscape(document.title)}<br>'
         'Basic terminal implementation - By:  Eric Bidelman '
         '&lt;ericbidelman@chromium.org&gt;, Adam Singer '
         '&lt;financeCoding@gmail.com&gt;<br>Adapted by Cameron Fitzgerald '
