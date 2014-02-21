@@ -1,7 +1,7 @@
 {
   "name": "Gitnu - Git interactive terminal not unix",
   "description": "An interative terminal for Git in Chrome",
-  "version": "0.2",
+  "version": "1.0",
   "manifest_version": 2,
   "permissions": [
     "https://www.google-analytics.com/",
