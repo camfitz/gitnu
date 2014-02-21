@@ -1,16 +1,18 @@
 import 'package:unittest/unittest.dart';
-import 'package:unittest/vm_config.dart';
+import 'package:unittest/html_config.dart';
 
 import 'dart:async';
 
+import '../app/constants.dart';
 import '../app/gitnutabcompleter.dart';
+import '../app/gitnuterminal.dart';
 
 /**
  * Setup the tests.
  * TODO (camfitz): Centralise the test runner for multiple test classes.
  */
 void main() {
-  useVMConfiguration();
+  useHtmlConfiguration();
   GitnuTerminalTest.run();
 }
 
@@ -21,7 +23,75 @@ class GitnuTerminalTest {
   GitnuTerminalTest();
 
   static void run() {
+    shortcutKeyTests();
     testTabCompleter();
+  }
+
+  /**
+   * Tests for GitnuTerminal shortcut keys
+   */
+  static void shortcutKeyTests() {
+    GitnuTerminal terminal;
+
+    void simulateCtrlShortcut(int keyCode) {
+      terminal.keyboardHandler.keyDownAction(CTRL_KEY);
+      terminal.keyboardHandler.keyDownAction(keyCode);
+      terminal.keyboardHandler.keyUpAction(CTRL_KEY);
+      terminal.keyboardHandler.keyUpAction(keyCode);
+    }
+
+    group('testCtrlW', () {
+      setUp(() {
+        terminal = new GitnuTerminal(new GitnuTerminalView.mock());
+      });
+
+      test('twoWords', () {
+        terminal.view.input.value = 'one two';
+        simulateCtrlShortcut(W_KEY);
+        expect(terminal.view.input.value, equals('one '));
+      });
+
+      test('trailingWhitespace', () {
+        terminal.view.input.value = 'one two    ';
+        simulateCtrlShortcut(W_KEY);
+        expect(terminal.view.input.value, equals('one '));
+      });
+
+      test('oneWord', () {
+        terminal.view.input.value = 'one';
+        simulateCtrlShortcut(W_KEY);
+        expect(terminal.view.input.value, equals(''));
+      });
+    });
+
+    group('testCtrlWCtrlY', () {
+      setUp(() {
+        terminal = new GitnuTerminal(new GitnuTerminalView.mock());
+        terminal.view.input.value = 'one two  ';
+      });
+
+      test('restoreWord', () {
+        simulateCtrlShortcut(W_KEY);
+        expect(terminal.view.input.value, equals('one '));
+        simulateCtrlShortcut(Y_KEY);
+        expect(terminal.view.input.value, equals('one two  '));
+      });
+
+      test('doubleRestoreWord', () {
+        simulateCtrlShortcut(W_KEY);
+        simulateCtrlShortcut(Y_KEY);
+        simulateCtrlShortcut(Y_KEY);
+        expect(terminal.view.input.value, equals('one two  two  '));
+      });
+
+      test('removeWordsAndRestore', () {
+        simulateCtrlShortcut(W_KEY);
+        simulateCtrlShortcut(W_KEY);
+        expect(terminal.view.input.value, equals(''));
+        simulateCtrlShortcut(Y_KEY);
+        expect(terminal.view.input.value, equals('one two  '));
+      });
+    });
   }
 
   /**

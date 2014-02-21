@@ -7,57 +7,174 @@ import 'dart:math';
 import 'constants.dart';
 import 'gitnuoutput.dart';
 import 'gitnutabcompleter.dart';
+import 'keyboardhandler.dart';
 import 'statictoolkit.dart';
 import 'stringutils.dart';
 
+/**
+ * Views container for GitnuTerminal.
+ */
+class GitnuTerminalView {
+  OutputElement output;
+  InputElement input;
+  DivElement cmdLine;
+  DivElement prompt;
+  DivElement containerDiv;
+
+  /**
+   * Constructs the view object from the document elements.
+   */
+  GitnuTerminalView() {
+    cmdLine = document.querySelector(kInputLine);
+    output = document.querySelector(kOutputRegion);
+    input = document.querySelector(kCmdLine);
+    containerDiv = document.querySelector(kContainer);
+    prompt = document.querySelector(kPrompt);
+  }
+
+  /**
+   * Creates a mock view object for testing.
+   */
+  GitnuTerminalView.mock() {
+    output = new OutputElement();
+    input = new InputElement();
+    cmdLine = new DivElement();
+    prompt = new DivElement();
+    containerDiv = new DivElement();
+  }
+}
+
 class GitnuTerminal {
-  OutputElement _output;
-  InputElement _input;
-  DivElement _cmdLine;
-  DivElement _prompt;
-  DivElement _containerDiv;
-  String _version = '0.0.1';
+  GitnuTerminalView view;
+  String version = '0.9';
   List<String> _history = [];
   int _historyPosition = 0;
   Map<String, Function> _cmds;
   Map<String, Function> _tabCompletion;
   GitnuOutput _gitnuOutput;
+  KeyboardHandler keyboardHandler;
 
-  GitnuTerminal() {
-    _cmdLine = document.querySelector(kInputLine);
-    _output = document.querySelector(kOutputRegion);
-    _input = document.querySelector(kCmdLine);
-    _containerDiv = document.querySelector(kContainer);
-    _prompt = document.querySelector(kPrompt);
+  String kill = "";
+  // If set to true, the kill command will empty the kill string before
+  // adding more words.
+  bool killNew = true;
 
+  GitnuTerminal(this.view) {
     _gitnuOutput = new GitnuOutput(writeOutput);
 
     // Prompt will need to be enabled by client.
     disablePrompt();
 
     // Capture focus if click is near input line.
-    _cmdLine.onClick.listen((event) => _input.focus());
+    view.cmdLine.onClick.listen((event) => view.input.focus());
 
     // Trick: Always force text cursor to end of input line.
-    _cmdLine.onClick.listen((event) => _input.value = _input.value);
+    view.cmdLine.onClick.listen((event) => view.input.value = view.input.value);
 
     // Capture focus to input line on any key press that doesn't affect
     // screen position.
     window.onKeyDown.listen(focusCommandLine);
 
+    // If the input field changes, reset the kill word buffer.
+    view.input.onChange.listen(_resetKillBuffer);
+    view.input.onKeyDown.listen(_resetKillBufferOnMove);
+    view.input.onSelect.listen(_resetKillBuffer);
+
     // Handle up/down key presses for history, tab completion and enter for
     // new command.
-    _cmdLine.onKeyDown.listen(historyHandler);
-    _cmdLine.onKeyDown.listen(processNewCommand);
-    _cmdLine.onKeyDown.listen(tabCompleterEvent);
+    view.cmdLine.onKeyDown.listen(historyHandler);
+    view.cmdLine.onKeyDown.listen(processNewCommand);
+    view.cmdLine.onKeyDown.listen(tabCompleterEvent);
 
     // Handles pgUp, pgDown, end and home scrolling
-    _containerDiv.onKeyDown.listen(positionHandler);
+    view.containerDiv.onKeyDown.listen(positionHandler);
+
+    // Register other shortcut keys
+    keyboardHandler = new KeyboardHandler();
+    keyboardHandler.registerShortcut(_emacsStartOfLine, A_KEY, true);
+    keyboardHandler.registerShortcut(_emacsEndOfLine, E_KEY, true);
+    keyboardHandler.registerShortcut(_emacsRemoveSubset, K_KEY, true);
+    keyboardHandler.registerShortcut((_) => clearCommand(null), L_KEY, true);
+    keyboardHandler.registerShortcut(_emacsClear, U_KEY, true);
+    keyboardHandler.registerShortcut(_emacsKillWord, W_KEY, true);
+    keyboardHandler.registerShortcut(_emacsYank, Y_KEY, true);
 
     // Ensures the terminal covers the correct height
     int bodyHeight = window.innerHeight;
-    _containerDiv.style.maxHeight = "${bodyHeight - kTopMargin}px";
-    _containerDiv.style.height = "${bodyHeight - kTopMargin}px";
+    view.containerDiv.style.maxHeight = "${bodyHeight - kTopMargin}px";
+    view.containerDiv.style.height = "${bodyHeight - kTopMargin}px";
+  }
+
+  /**
+   * Reset the kill word buffer. Set this switch to clear the buffer next time
+   * we kill.
+   */
+  void _resetKillBuffer([Event e]) {
+    killNew = true;
+  }
+
+  /**
+   * If a cursor movement is detected in the buffer, reset the kill word buffer.
+   */
+  void _resetKillBufferOnMove(KeyboardEvent e) {
+    if(e.keyCode == LEFT_ARROW_KEY && e.keyCode == RIGHT_ARROW_KEY)
+      _resetKillBuffer();
+  }
+
+  /**
+   * Emacs kill word shortcut, Ctrl+W
+   */
+  void _emacsKillWord(int keyCode) {
+    if (killNew)
+      kill = "";
+    killNew = false;
+
+    String inputNoTrailingWhiteSpace = view.input.value.trim();
+    String lastWord = view.input.value;
+    int separator = 0;
+    if (inputNoTrailingWhiteSpace.contains(' ')) {
+      separator = inputNoTrailingWhiteSpace.lastIndexOf(' ') + 1;
+      lastWord = view.input.value.substring(separator, view.input.value.length);
+    }
+    kill = lastWord + kill;
+    view.input.value = view.input.value.substring(0, separator);
+  }
+
+  /**
+   * Emacs yank shortcut, Ctrl+Y
+   */
+  void _emacsYank(int keyCode) {
+    _resetKillBuffer();
+    view.input.value += kill;
+  }
+
+  /**
+   * Emacs clear line shortcut, Ctrl+U
+   */
+  void _emacsClear(int keyCode) {
+    view.input.value = "";
+  }
+
+  /**
+   * Emacs start of line shortcut, Ctrl+A
+   */
+  void _emacsStartOfLine(int keyCode) {
+    view.input.setSelectionRange(0, 0);
+  }
+
+  /**
+   * Emacs end of line shortcut, Ctrl+E
+   */
+  void _emacsEndOfLine(int keyCode) {
+    view.input.setSelectionRange(
+        view.input.value.length, view.input.value.length);
+  }
+
+  /**
+   * Emacs removes from cursor to end of line, Ctrl+K
+   */
+  void _emacsRemoveSubset(int keyCode) {
+    view.input.value = view.input.value.substring(0, view.input.selectionStart);
   }
 
   /**
@@ -65,7 +182,7 @@ class GitnuTerminal {
    */
   void focusCommandLine(KeyboardEvent event) {
     if (!StaticToolkit.isNavigateKey(event))
-      _input.focus();
+      view.input.focus();
   }
 
   /**
@@ -75,16 +192,16 @@ class GitnuTerminal {
     bool handled = true;
     switch (event.keyCode) {
       case PG_UP_KEY:
-        _containerDiv.scrollByLines(-5);
+        view.containerDiv.scrollByLines(-5);
         break;
       case PG_DOWN_KEY:
-        _containerDiv.scrollByLines(5);
+        view.containerDiv.scrollByLines(5);
         break;
       case END_KEY:
-        _cmdLine.scrollIntoView(ScrollAlignment.TOP);
+        view.cmdLine.scrollIntoView(ScrollAlignment.TOP);
         break;
       case HOME_KEY:
-        _output.scrollIntoView(ScrollAlignment.TOP);
+        view.output.scrollIntoView(ScrollAlignment.TOP);
         break;
       default:
         handled = false;
@@ -99,17 +216,17 @@ class GitnuTerminal {
    * Displays the prompt indicator "$>"
    */
   void enablePrompt() {
-    _input.disabled = false;
-    _prompt.innerHtml = "\$&gt;";
-    _input.focus();
+    view.input.disabled = false;
+    view.prompt.innerHtml = "\$&gt;";
+    view.input.focus();
   }
 
   /**
    * Hides the prompt indicator and disables the input prompt.
    */
   void disablePrompt() {
-    _input.disabled = true;
-    _prompt.innerHtml = "";
+    view.input.disabled = true;
+    view.prompt.innerHtml = "";
   }
 
   /**
@@ -117,20 +234,22 @@ class GitnuTerminal {
    * in the output pane, and creates a new input element.
    */
   void commitBufferToLog() {
-    if (!_input.value.isEmpty) {
-      _history.add(_input.value);
+    if (!view.input.value.isEmpty) {
+      _history.add(view.input.value);
       _historyPosition = _history.length;
     }
 
     // Move the line to output and remove id's.
-    DivElement line = _input.parent.parent.clone(true);
+    DivElement line = view.input.parent.parent.clone(true);
     line.attributes.remove('id');
     line.classes.add('line');
     InputElement cmdInput = line.querySelector(kCmdLine);
     cmdInput.attributes.remove('id');
     cmdInput.autofocus = false;
     cmdInput.readOnly = true;
-    _output.children.add(line);
+    view.output.children.add(line);
+
+    _resetKillBuffer();
   }
 
   /**
@@ -142,13 +261,13 @@ class GitnuTerminal {
     if (event.keyCode == ENTER_KEY) {
       commitBufferToLog();
 
-      String cmdline = _input.value;
-      _input.value = ""; // clear input
+      String cmdline = view.input.value;
+      view.input.value = ""; // clear input
       disablePrompt();
 
       runCommand(cmdline).whenComplete(() {
         enablePrompt();
-        _cmdLine.scrollIntoView(ScrollAlignment.TOP);
+        view.cmdLine.scrollIntoView(ScrollAlignment.TOP);
       });
     }
   }
@@ -181,8 +300,9 @@ class GitnuTerminal {
   void historyHandler(KeyboardEvent event) {
     if (event.keyCode == UP_ARROW_KEY || event.keyCode == DOWN_ARROW_KEY) {
       event.preventDefault();
+      _resetKillBuffer();
       if (_historyPosition < _history.length)
-        _history[_historyPosition] = _input.value;
+        _history[_historyPosition] = view.input.value;
     }
 
     if (event.keyCode == UP_ARROW_KEY) {
@@ -197,9 +317,9 @@ class GitnuTerminal {
 
     if (event.keyCode == UP_ARROW_KEY || event.keyCode == DOWN_ARROW_KEY) {
       if (_historyPosition == _history.length)
-        _input.value = "";
+        view.input.value = "";
       else if (_history.length != 0 && _history[_historyPosition] != null)
-        _input.value = _history[_historyPosition];
+        view.input.value = _history[_historyPosition];
     }
   }
 
@@ -213,19 +333,20 @@ class GitnuTerminal {
                          List<String> options) {
     // If the input field has changed since the tab complete was called.
     // (i.e. due to an async complete taking too long, double hit of tab key).
-    if (cmdLine != _input.value)
+    if (cmdLine != view.input.value)
       return;
 
     if (options.isEmpty)
       return;
 
     if (options.length == 1) {
-      _input.value += options[0].replaceFirst(currentWord, '') + ' ';
+      view.input.value += options[0].replaceFirst(currentWord, '') + ' ';
       return;
     }
 
     commitBufferToLog();
     _gitnuOutput.printStringColumns(options);
+    _resetKillBuffer();
   }
 
   /**
@@ -236,8 +357,8 @@ class GitnuTerminal {
     if (event.keyCode != TAB_KEY)
       return;
     event.preventDefault();
-    GitnuTabCompleter.tabCompleter(_input.value, _cmds, _tabCompletion).then(
-        (Completion completion) {
+    GitnuTabCompleter.tabCompleter(
+        view.input.value, _cmds, _tabCompletion).then((Completion completion) {
       if (completion != null)
         writeTabCompleter(
             completion.cmdLine, completion.last, completion.options);
@@ -318,7 +439,7 @@ class GitnuTerminal {
       '</pre>');
     }
 
-    writeOutput('<div>Welcome to Gitnu! (v$_version)</div>');
+    writeOutput('<div>Welcome to Gitnu! (v$version)</div>');
     writeOutput(new DateTime.now().toLocal().toString());
     writeOutput('<p>Documentation: type "help"</p>');
   }
@@ -328,8 +449,8 @@ class GitnuTerminal {
    * element.
    */
   void writeOutput(String h) {
-    _output.insertAdjacentHtml('beforeEnd', h);
-    _cmdLine.scrollIntoView(ScrollAlignment.TOP);
+    view.output.insertAdjacentHtml('beforeEnd', h);
+    view.cmdLine.scrollIntoView(ScrollAlignment.TOP);
   }
 
   /**
@@ -337,11 +458,13 @@ class GitnuTerminal {
    * User function invariant (except help... builds off user functions).
    */
   void clearCommand(List<String> args) {
-    _output.innerHtml = '';
+    view.output.innerHtml = '';
   }
 
   void helpCommand(List<String> args) {
     StringBuffer sb = new StringBuffer();
+    sb.write('Keyboard shortcuts for default emacs behaviours: '
+             'Ctrl + A, E, K, L, U, W or Y<br><br>');
     sb.write('<div class="ls-files">');
     _cmds.keys.forEach((key) => sb.write('$key<br>'));
     sb.write('</div>');
@@ -349,7 +472,7 @@ class GitnuTerminal {
   }
 
   void versionCommand(List<String> args) {
-    writeOutput("$_version");
+    writeOutput("$version");
   }
 
   void dateCommand(List<String> args) {

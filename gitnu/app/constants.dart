@@ -55,12 +55,22 @@ final String kAuthButton = '#authButton';
 final int kTopMargin = 54;
 
 // Various key codes.
+const int A_KEY = 65;
+const int CTRL_KEY = 17;
 const int DOWN_ARROW_KEY = 40;
+const int E_KEY = 69;
 const int END_KEY = 35;
 const int ENTER_KEY = 13;
 const int HOME_KEY = 36;
+const int K_KEY = 75;
+const int L_KEY = 76;
+const int LEFT_ARROW_KEY = 37;
 const int PG_DOWN_KEY = 34;
 const int PG_UP_KEY = 33;
 const int Q_KEY = 81;
+const int RIGHT_ARROW_KEY = 39;
 const int TAB_KEY = 9;
+const int U_KEY = 85;
 const int UP_ARROW_KEY = 38;
+const int W_KEY = 87;
+const int Y_KEY = 89;

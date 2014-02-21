@@ -21,7 +21,7 @@ class Gitnu {
   Gitnu();
 
   void run() {
-    _term = new GitnuTerminal();
+    _term = new GitnuTerminal(new GitnuTerminalView());
     _output = new GitnuOutput(_term.writeOutput);
     RootPicker rootPicker = new RootPicker(_output, startShell);
   }
