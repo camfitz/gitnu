@@ -50,7 +50,7 @@ class PullCommand extends GitCommandBase implements ShellCommand {
         // TODO(camfitz): Do something with the result.
         window.console.debug("$value");
       }, onError: (e) {
-        _output.printLine("push error: $e");
+        _output.printLine("pull error: $e");
       });
     });
   }
