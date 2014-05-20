@@ -19,7 +19,7 @@ class OptionsCommand extends GitCommandBase implements ShellCommand {
   }
 
   void help() {
-    String helpText = """usage: git set ${html('<name> <email>')}
+    String helpText = """usage: git options ${html('<name> <email>')}
         <pre class="help">${getArgParser().getUsage()}</pre>""";
     _output.printHtml(helpText);
   }
@@ -38,7 +38,7 @@ class OptionsCommand extends GitCommandBase implements ShellCommand {
     }
 
     if (commandLineOptions.rest.length != 2)
-      throw new Exception("set: wrong number of arguments.");
+      throw new Exception("options: wrong number of arguments.");
 
     _options.name = commandLineOptions.rest[0];
     _options.email = commandLineOptions.rest[1];
